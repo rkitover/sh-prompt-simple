@@ -4,7 +4,8 @@ This is a simple, lightweight, and nice looking prompt that runs quickly
 even in very slow shells like MSYS2, Cygwin and WSL.
 
 It's colorful and shows the git branch when in a git checkout, as well as the
-last command exit status (checkmark for success and X mark for non-zero exit.)
+last command exit status (green checkmark for success and red X mark for
+non-zero exit.)
 
 On MSYS2 it also shows the current value of `$MSYSTEM`, that is either `MSYS`,
 `MINGW32` or `MINGW64`.
