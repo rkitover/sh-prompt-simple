@@ -1,40 +1,42 @@
 #!/bin/sh
 
+_sps_hostname=$(hostname)
+_e=$(printf "\033")
 _esc= _end= _nl_esc= _nl_end=
 [ -z "$ZSH_VERSION" ]  && _esc=$(printf '\001') _end=$(printf '\002')
-
 [ -z "$BASH_VERSION" ] && _nl_esc=$_esc _nl_end=$_end
 
-BMPS_cmd_status() {
+_SPS_cmd_status() {
     if [ "$?" -eq 0 ]; then
-        printf "${_esc}[0;32m${_end}%s" '✔'
+        printf "${_esc}${_e}[0;32m${_end}%s" 'v'
     else
-        printf "${_esc}[0;31m${_end}%s" '✘'
+        printf "${_esc}${_e}[0;31m${_end}%s" 'x'
     fi
 }
 
-BMPS_in_msys2() {
-    if [ -n "$MSYSTEM" ] && [ -z "$BMPS_IN_MSYS2" ]; then
+_SPS_in_msys2() {
+    if [ -n "$MSYSTEM" ] && [ -z "$_SPS_IN_MSYS2" ]; then
         if [ "$(uname -o)" = Msys ]; then
-            BMPS_IN_MSYS2=1
+            _SPS_IN_MSYS2=1
         fi
     fi
 
-    if [ -n "$BMPS_IN_MSYS2" ]; then
+    if [ -n "$_SPS_IN_MSYS2" ]; then
         return 0
     fi
 
     return 1
 }
 
-BMPS_msystem() {
-    if [ -n "$MSYSTEM" ] && BMPS_in_msys2; then
+_SPS_msystem() {
+    if [ -n "$MSYSTEM" ] && _SPS_in_msys2; then
         # need trailing space here
-        printf "${_esc}[35m${_end}%s " "$MSYSTEM"
+#        printf "${_esc}${_e}[1;97m<${_e}[0;95m${_end}%s${_esc}${_e}[1;97m>${_end} " "$MSYSTEM"
+        printf "${_esc}${_e}[0;95m${_end}%s " "$MSYSTEM"
     fi
 }
 
-BMPS_in_git_tree() {
+_SPS_in_git_tree() {
     (
         while [ "$PWD" != / ]; do
             [ -d .git ] && exit 0
@@ -45,20 +47,20 @@ BMPS_in_git_tree() {
     return $?
 }
 
-BMPS_git_branch() {
-    ! BMPS_in_git_tree && return 0
+_SPS_git_branch() {
+    ! _SPS_in_git_tree && return 0
 
     _br=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 
     if [ -n "$_br" ]; then
-        printf "${_esc}[0;36m${_end}[${_esc}[35m${_end}%s${_esc}[36m${_end}]${_esc}[0m${_end}" "${_br}"
+        printf "${_esc}${_e}[0;36m${_end}[${_esc}${_e}[35m${_end}%s${_esc}${_e}[36m${_end}]${_esc}${_e}[0m${_end}" "${_br}"
     fi
 }
 
-BMPS_cwd() {
+_SPS_cwd() {
     case "$PWD" in
         "$HOME")
-            printf "${_esc}[33m${_end}%s" '~'
+            printf "${_esc}${_e}[33m${_end}%s" '~'
             ;;
         "$HOME"/*)
             _pwd=${PWD#$HOME}
@@ -74,10 +76,10 @@ BMPS_cwd() {
                 esac
             done
 
-            printf "${_esc}[33m${_end}~/%s" "${_pwd}"
+            printf "${_esc}${_e}[33m${_end}~/%s" "${_pwd}"
             ;;
         *)
-            printf "${_esc}[33m${_end}%s" "${PWD}"
+            printf "${_esc}${_e}[33m${_end}%s" "${PWD}"
             ;;
     esac
 }
@@ -85,14 +87,17 @@ BMPS_cwd() {
 : ${USER:=$(whoami)}
 
 if [ -z "$ZSH_VERSION" ]; then
-    PS1="\$(BMPS_cmd_status)  \$(BMPS_msystem)\$(BMPS_cwd) \$(BMPS_git_branch)${_nl_esc}
-${_nl_end}${_esc}[0;34m${_end}\${USER}${_esc}[0;37m${_end}@${_esc}[1;34m${_end}\$(hostname)  ${_esc}[1;31m${_end}➤${_esc}[0m${_end}  "
-else
+
+    PS1="\$(_SPS_cmd_status) \$(_SPS_msystem)\$(_SPS_cwd) \$(_SPS_git_branch)${_nl_esc}
+${_nl_end}${_esc}${_e}[38;2;140;206;250m${_end}\${USER}${_esc}${_e}[1;97m${_end}@${_esc}${_e}[38;2;140;206;250m${_end}\${_sps_hostname} ${_esc}${_e}[38;2;220;20;60m${_end}>${_esc}${_e}[0m${_end} "
+
+else # zsh
+
     setopt PROMPT_SUBST
 
     precmd() {
-        echo "$(BMPS_cmd_status)  $(BMPS_msystem)$(BMPS_cwd) $(BMPS_git_branch)"
+        echo "$(_SPS_cmd_status) $(_SPS_msystem)$(_SPS_cwd) $(_SPS_git_branch)"
     }
 
-    PS1="%{[0;34m%}\${USER}%{[0;37m%}@%{[1;34m%}\$(hostname)  %{[1;31m%}➤%{[0m%}  "
+    PS1="%{${_e}[38;2;140;206;250m%}\${USER}%{${_e}[1;97m%}@%{${_e}[38;2;140;206;250m%}\${_sps_hostname} %{${_e}[38;2;220;20;60m%}>%{${_e}[0m%} "
 fi
