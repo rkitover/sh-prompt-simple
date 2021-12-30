@@ -3,8 +3,7 @@
 _sps_hostname=$(hostname)
 _e=$(printf "\033")
 _esc= _end= _nl_esc= _nl_end=
-[ -z "$ZSH_VERSION" ]  && _esc=$(printf '\001') _end=$(printf '\002')
-[ -z "$BASH_VERSION" ] && _nl_esc=$_esc _nl_end=$_end
+[ -n "$BASH_VERSION" ]  && _esc=$(printf '\001') _end=$(printf '\002')
 
 _SPS_cmd_status() {
     if [ "$?" -eq 0 ]; then
