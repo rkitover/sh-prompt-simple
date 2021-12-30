@@ -1,5 +1,7 @@
 ## sh-prompt-simple
 
+![how the prompt looks in a window](/screenshots/sh-prompt-simple-screenshot.png?raw=true)
+
 This is a simple, lightweight, and nice looking prompt that runs quickly
 even in very slow shells like MSYS2, Cygwin and WSL.
 
