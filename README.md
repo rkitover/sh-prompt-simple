@@ -9,6 +9,15 @@ It's colorful and shows the git branch when in a git checkout, as well as the
 last command exit status (green checkmark for success and red X mark for
 non-zero exit.)
 
+It can also show a clean/dirty git status indicator if you set this variable:
+
+```bash
+export SPS_STATUS=1
+```
+. This is disabled by default because it makes the prompt much slower on things
+like MSYS2/Cygwin, but it will work fine on Linux. You can also try it on
+MSYS2/Cygwin and see if the slowdown is acceptable for you.
+
 On MSYS2 it also shows the current value of `$MSYSTEM`, that is either `MSYS`,
 `MINGW32` or `MINGW64`.
 
@@ -19,7 +28,7 @@ It's based on the [Solarized
 Extravagant](https://github.com/magicmonty/bash-git-prompt/blob/master/themes/Solarized_Extravagant.bgptheme)
 theme in [bash-git-prompt](https://github.com/magicmonty/bash-git-prompt), but
 it doesn't have any of the bash-git-prompt features except the git branch, exit
-status and nice colors.
+status and nice colors. And the optional status indicator mentioned above.
 
 Enjoy!
 
@@ -34,7 +43,7 @@ git clone https://github.com/rkitover/sh-prompt-simple
 Somewhere in your shell startup file such as `~/.bashrc` put something like this:
 
 ```bash
-source ~/source/repos/sh-prompt-simple/prompt.sh
+. ~/source/repos/sh-prompt-simple/prompt.sh
 ```
 
 . For bash I also recommend:
