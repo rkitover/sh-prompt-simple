@@ -26,6 +26,9 @@ unset SPS_STATUS
 ```
 , to turn it off.
 
+It may be particularly slow when entering a repository, but after that it will
+be cached and the prompt will be much faster.
+
 On MSYS2 it also shows the current value of `$MSYSTEM`, that is either `MSYS`,
 `MINGW32` or `MINGW64`.
 
