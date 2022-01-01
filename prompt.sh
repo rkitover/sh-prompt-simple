@@ -84,7 +84,7 @@ _SPS_git_bar() {
 
     _status=
     if [ -n "$SPS_STATUS" ]; then
-        _status="${_esc}${_e}[1;97m${_end}|${_esc}${_e}[0m${_end}$(_SPS_git_status)"
+        _status="${_esc}${_e}[0;97m${_end}|${_esc}${_e}[0m${_end}$(_SPS_git_status)"
     fi
 
     if [ -n "$_br" ]; then
