@@ -21,7 +21,7 @@ MSYS2/Cygwin and see if the slowdown is acceptable for you.
 On MSYS2 it also shows the current value of `$MSYSTEM`, that is either `MSYS`,
 `MINGW32` or `MINGW64`.
 
-It is compatible bash, zsh or any POSIX compliant sh implementation such as
+It is compatible with bash, zsh and some other POSIX sh implementations such as
 busybox, (d)ash, ksh, etc..
 
 It's based on the [Solarized
