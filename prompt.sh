@@ -2,7 +2,7 @@
 
 _sps_hostname=$(hostname)
 _e=$(printf "\033")
-_esc= _end= _nl_esc= _nl_end=
+_esc= _end=
 [ -n "$BASH_VERSION" ]  && _esc=$(printf '\001') _end=$(printf '\002')
 
 _SPS_cmd_status() {
@@ -31,7 +31,7 @@ _SPS_msystem() {
     if [ -n "$MSYSTEM" ] && _SPS_in_msys2; then
         # need trailing space here
 #        printf "${_esc}${_e}[1;97m<${_e}[0;95m${_end}%s${_esc}${_e}[1;97m>${_end} " "$MSYSTEM"
-        printf "${_esc}${_e}[0;95m${_end}%s " "$MSYSTEM"
+        printf "${_esc}${_e}[0;95m${_end}%s" "$MSYSTEM"
     fi
 }
 
@@ -87,16 +87,16 @@ _SPS_cwd() {
 
 if [ -z "$ZSH_VERSION" ]; then
 
-    PS1="\$(_SPS_cmd_status) \$(_SPS_msystem)\$(_SPS_cwd) \$(_SPS_git_branch)${_nl_esc}
-${_nl_end}${_esc}${_e}[38;2;140;206;250m${_end}\${USER}${_esc}${_e}[1;97m${_end}@${_esc}${_e}[0m${_e}[38;2;140;206;250m${_end}\${_sps_hostname} ${_esc}${_e}[38;2;220;20;60m${_end}>${_esc}${_e}[0m${_end} "
+    PS1='`_SPS_cmd_status` `_SPS_msystem` `_SPS_cwd` `_SPS_git_branch`
+'"${_esc}${_e}[38;2;140;206;250m${_end}${USER}${_esc}${_e}[1;97m${_end}@${_esc}${_e}[0m${_e}[38;2;140;206;250m${_end}${_sps_hostname} ${_esc}${_e}[38;2;220;20;60m${_end}>${_esc}${_e}[0m${_end} "
 
 else # zsh
 
     setopt PROMPT_SUBST
 
     precmd() {
-        echo "$(_SPS_cmd_status) $(_SPS_msystem)$(_SPS_cwd) $(_SPS_git_branch)"
+        echo "$(_SPS_cmd_status) $(_SPS_msystem) $(_SPS_cwd) $(_SPS_git_branch)"
     }
 
-    PS1="%{${_e}[38;2;140;206;250m%}\${USER}%{${_e}[1;97m%}@%{${_e}[0m${_e}[38;2;140;206;250m%}\${_sps_hostname} %{${_e}[38;2;220;20;60m%}>%{${_e}[0m%} "
+    PS1="%{${_e}[38;2;140;206;250m%}${USER}%{${_e}[1;97m%}@%{${_e}[0m${_e}[38;2;140;206;250m%}${_sps_hostname} %{${_e}[38;2;220;20;60m%}>%{${_e}[0m%} "
 fi
