@@ -18,6 +18,14 @@ export SPS_STATUS=1
 like MSYS2/Cygwin, but it will work fine on Linux. You can also try it on
 MSYS2/Cygwin and see if the slowdown is acceptable for you.
 
+You can turn it on or off without re-sourcing any files, so if it's particularly
+slow in a large repository you can just do:
+
+```bash
+unset SPS_STATUS
+```
+, to turn it off.
+
 On MSYS2 it also shows the current value of `$MSYSTEM`, that is either `MSYS`,
 `MINGW32` or `MINGW64`.
 
