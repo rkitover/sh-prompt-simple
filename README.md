@@ -5,9 +5,9 @@
 This is a simple, lightweight, and nice looking prompt that runs quickly
 even in very slow shells like MSYS2, Cygwin and WSL.
 
-It's colorful and shows the git branch when in a git checkout, as well as the
-last command exit status (green checkmark for success and red X mark for
-non-zero exit.)
+It shows the short name of the current environment (distribution, OS, etc.) the
+git branch when in a git checkout, as well as the last command exit status
+(green checkmark for success and red X mark for non-zero exit.)
 
 It can also show a clean/dirty git status indicator if you set this variable:
 
@@ -28,9 +28,6 @@ unset SPS_STATUS
 
 It may be particularly slow when entering a repository, but after that it will
 be cached and the prompt will be much faster.
-
-On MSYS2 it also shows the current value of `$MSYSTEM`, that is either `MSYS`,
-`MINGW32` or `MINGW64`.
 
 It is compatible with bash, zsh and some other POSIX sh implementations such as
 busybox, (d)ash, ksh, etc..
