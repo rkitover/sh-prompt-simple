@@ -51,7 +51,7 @@ _SPS_detect_distro() {
         /^[^-]+-[^-]+$/!{
             s/[[:punct:]]+/_/g
         }
-    ' | tr 'a-z' 'A-Z');
+    ' | tr '[:lower:]' '[:upper:]');
 
     # If normalized name is longer than 15 characters, abbreviate
     # instead.
@@ -61,7 +61,7 @@ _SPS_detect_distro() {
             s/(^|[[:space:][:punct:]]+)([[:alpha:]])[[:alpha:]]+/\1\2/
             t abbrev
             s/[[:space:][:punct:]]+//g
-        ' | tr 'a-z' 'A-Z')
+        ' | tr '[:lower:]' '[:upper:]')
     fi
 
     echo "$normalized"
@@ -84,7 +84,7 @@ _SPS_detect_env() {
         *)
             _sps_env=$(uname -o | \
                 sed -E 's/[[:space:][:punct:]]+/_/g' | \
-                tr 'a-z' 'A-Z' \
+                tr '[:lower:]' '[:upper:]' \
             )
             ;;
     esac
