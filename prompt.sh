@@ -8,7 +8,7 @@ _esc= _end=
 _SPS_detect_distro() {
     [ -f /etc/os-release ] || return
 
-    distro=$(sed -nE 's/^ID="([^"]+)".*/\1/p' /etc/os-release)
+    distro=$(sed -nE '/^ID="/s/^ID="([^"]+)".*/\1/p; s/^ID=([^[:space:]]+)/\1/p; t match; d; :match; q' /etc/os-release)
 
     normalized=$(echo "$distro" | sed -E '
         # Remove all buzzwords and extraneous words.
