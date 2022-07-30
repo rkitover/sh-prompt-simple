@@ -5,6 +5,16 @@ _e=$(printf "\033")
 _esc= _end=
 [ -n "$BASH_VERSION" ]  && _esc=$(printf '\001') _end=$(printf '\002')
 
+_SPS_detect_non_linux_env() {
+    if [ -n "$TERMUX_VERSION" ]; then
+        echo TERMUX
+        return
+    fi
+
+    uname -o | sed -E 's/[[:space:][:punct:]]+/_/g' | \
+        tr '[:lower:]' '[:upper:]'
+}
+
 _SPS_detect_distro() {
     [ -f /etc/os-release ] || return
 
@@ -82,10 +92,7 @@ _SPS_detect_env() {
             fi
             ;;
         *)
-            _sps_env=$(uname -o | \
-                sed -E 's/[[:space:][:punct:]]+/_/g' | \
-                tr '[:lower:]' '[:upper:]' \
-            )
+            _sps_env=$(_SPS_detect_non_linux_env)
             ;;
     esac
 }
