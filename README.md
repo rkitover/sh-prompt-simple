@@ -29,6 +29,9 @@ It's based on the [Solarized
 Extravagant](https://github.com/magicmonty/bash-git-prompt/blob/master/themes/Solarized_Extravagant.bgptheme)
 theme in [bash-git-prompt](https://github.com/magicmonty/bash-git-prompt).
 
+I also made a [PowerShell version of this
+prompt](https://gist.github.com/rkitover/61b85690896e29b42897b99c2486477c).
+
 ### installation
 
 ```shell
