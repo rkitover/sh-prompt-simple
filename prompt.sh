@@ -176,7 +176,8 @@ _SPS_git_status_color() {
     _clean=
 
     if echo "$_status" | grep -Eq 'working tree clean'; then
-        if echo "$_status" | grep -Eq '^Your branch is up to date with'; then
+        # For remote tracking branches, check that the branch is up-to-date with the remote branch.
+        if [ "$(echo "$_status" | wc -l)" -le 2 ] || echo "$_status" | grep -Eq '^Your branch is up to date with'; then
             _clean=1
         fi
     fi
