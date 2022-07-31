@@ -1,13 +1,41 @@
 #!/bin/sh
 
 _sps_hostname=$(hostname | sed 's/\..*//')
-_e=$(printf "\033")
-_esc= _end=
-[ -n "$BASH_VERSION" ]  && _esc=$(printf '\001') _end=$(printf '\002')
+
+if [ -f /proc/$$/exe ] && ls -l /proc/$$/exe 2>/dev/null | sed 's/.*-> //' | grep -Eq '(^|/)(busybox|bb|ginit|.?ash|ksh.*)$'; then
+    _is_ash_or_ksh=1
+fi
+
+if [ -z "$SPS_ESCAPE" ] && [ -n "${BASH_VERSION}${_is_ash_or_ksh}" ]; then
+    SPS_ESCAPE=1
+fi
+
+unset _is_ash_or_ksh
+
+_sps_tmp="${TMP:-${TEMP:-/tmp}}/sh-prompt-simple/$$"
+
+mkdir -p "$_sps_tmp"
+
+_SPS_quit() {
+    rm -rf "$_sps_tmp"
+
+    tmp_root=${_sps_tmp%/*}
+
+    if [ -z "$(find "$tmp_root" -mindepth 1 -type d)" ]; then
+        rm -rf "$tmp_root"
+    fi
+
+    return 0
+}
+
+trap "_SPS_quit" EXIT
 
 _SPS_detect_non_linux_env() {
     if [ -n "$TERMUX_VERSION" ]; then
         echo TERMUX
+        return
+    elif [ "$(uname -o)" = Msys ] && [ -n "$MSYSTEM" ]; then
+        echo "$MSYSTEM"
         return
     fi
 
@@ -81,15 +109,9 @@ _SPS_detect_distro() {
 
 _SPS_detect_env() {
     case "$(uname -o)" in
-        Msys)
-            _sps_env='$MSYSTEM'
-            ;;
         *Linux)
             _sps_env=$(_SPS_detect_distro)
-
-            if [ -z "$_sps_env" ]; then
-                _sps_env=LINUX
-            fi
+            : ${_sps_env:=LINUX}
             ;;
         *)
             _sps_env=$(_SPS_detect_non_linux_env)
@@ -97,19 +119,29 @@ _SPS_detect_env() {
     esac
 }
 
-_SPS_env() {
-    eval printf "\"${_esc}${_e}\""\''[0;95m'\'"\"${_end}%s\"" "\"$_sps_env\""
+_SPS_status_color() {
+    if [ "$?" -eq 0 ]; then
+        echo 0 > "$_sps_tmp/cmd_status"
+        printf "\033[0;32m"
+    else
+        echo 1 > "$_sps_tmp/cmd_status"
+        printf "\033[0;31m"
+    fi
 }
 
-_SPS_cmd_status() {
-    if [ "$?" -eq 0 ]; then
-        printf "${_esc}${_e}[0;32m${_end}%s" 'v'
+_SPS_status() {
+    if [ "$(cat "$_sps_tmp/cmd_status")" -eq 0 ]; then
+        printf 'v'
     else
-        printf "${_esc}${_e}[0;31m${_end}%s" 'x'
+        printf 'x'
     fi
 }
 
 _SPS_in_git_tree() {
+    if [ -f "$_sps_tmp/in_git_tree" ]; then
+        return "$(cat "$_sps_tmp/in_git_tree")"
+    fi
+
     OLDPWD=$PWD
 
     _matched=
@@ -126,14 +158,20 @@ _SPS_in_git_tree() {
 
     if [ -n "$_matched" ]; then
         unset OLDPWD _matched
+        echo 0 > "$_sps_tmp/in_git_tree"
         return 0
     fi
 
     unset OLDPWD _matched
+    echo 1 > "$_sps_tmp/in_git_tree"
     return 1
 }
 
-_SPS_git_status() {
+_SPS_git_status_color() {
+    if [ -z "$SPS_STATUS" ] || ! _SPS_in_git_tree; then
+        return
+    fi
+
     _status=$(LANG=C git status 2>/dev/null)
     _clean=
 
@@ -144,35 +182,56 @@ _SPS_git_status() {
     fi
 
     if [ -n "$_clean" ]; then
-        printf "${_esc}${_e}[0;32m${_end}%s" 'v'
+        echo 0 > "$_sps_tmp/git_status"
+        printf "\033[0;32m"
     else
-        printf "${_esc}${_e}[0;31m${_end}%s" '~~~'
+        echo 1 > "$_sps_tmp/git_status"
+        printf "\033[0;31m"
     fi
 
     unset _status _clean
 }
 
-_SPS_git_bar() {
-    ! _SPS_in_git_tree && return 0
-
-    _br=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-
-    _status=
-    if [ -n "$SPS_STATUS" ]; then
-        _status="${_esc}${_e}[0;97m${_end}|${_esc}${_e}[0m${_end}$(_SPS_git_status)"
+_SPS_git_status() {
+    if [ -z "$SPS_STATUS" ] || ! _SPS_in_git_tree; then
+        return
     fi
 
-    if [ -n "$_br" ]; then
-        printf "${_esc}${_e}[0;36m${_end}[${_esc}${_e}[35m${_end}%s%s${_esc}${_e}[36m${_end}]${_esc}${_e}[0m${_end}" "$_br" "$_status"
+    if [ "$(cat "$_sps_tmp/git_status")" = 0 ]; then
+        printf 'v'
+    else
+        printf '~~~'
+    fi
+}
+
+_SPS_git_sep() {
+    if [ -z "$SPS_STATUS" ] || ! _SPS_in_git_tree; then
+        return
     fi
 
-    unset _br _status
+    printf '|'
+}
+
+_SPS_git_open_bracket() {
+    _SPS_in_git_tree && printf '['
+}
+
+_SPS_git_close_bracket() {
+    _SPS_in_git_tree && printf ']'
+
+    rm "$_sps_tmp/"*git* 2>/dev/null
+}
+
+_SPS_git_branch() {
+    ! _SPS_in_git_tree && return
+
+    git rev-parse --abbrev-ref HEAD 2>/dev/null
 }
 
 _SPS_cwd() {
     case "$PWD" in
         "$HOME")
-            printf "${_esc}${_e}[33m${_end}%s" '~'
+            printf '~'
             ;;
         "$HOME"/*)
             _pwd=${PWD#$HOME}
@@ -188,10 +247,10 @@ _SPS_cwd() {
                 esac
             done
 
-            printf "${_esc}${_e}[33m${_end}~/%s" "${_pwd}"
+            printf "~/${_pwd}"
             ;;
         *)
-            printf "${_esc}${_e}[33m${_end}%s" "${PWD}"
+            printf "${PWD}"
             ;;
     esac
 }
@@ -200,20 +259,61 @@ _SPS_detect_env
 
 : ${USER:=$(whoami)}
 
+_e=$(printf "\033")
+
 if [ -z "$ZSH_VERSION" ]; then
 
-    PS1='`_SPS_cmd_status` `_SPS_env` `_SPS_cwd` `_SPS_git_bar`
-'"${_esc}${_e}[38;2;140;206;250m${_end}${USER}${_esc}${_e}[1;97m${_end}@${_esc}${_e}[0m${_e}[38;2;140;206;250m${_end}${_sps_hostname} ${_esc}${_e}[38;2;220;20;60m${_end}>${_esc}${_e}[0m${_end} "
+
+    if [ "$SPS_ESCAPE" = 1 ]; then
+        PS1="\
+\["'`_SPS_status_color`'"\]"'`_SPS_status`'" \
+\[${_e}[0;95m\]${_sps_env} \
+\[${_e}[33m\]"'`_SPS_cwd`'" \
+\[${_e}[0;36m\]"'`_SPS_git_open_bracket`'"\
+\[${_e}[35m\]"'`_SPS_git_branch`'"\
+\[${_e}[0;97m\]"'`_SPS_git_sep`'"\
+\["'`_SPS_git_status_color`'"\]"'`_SPS_git_status`'"\
+\[${_e}[0;36m\]"'`_SPS_git_close_bracket`'"
+\[${_e}[38;2;140;206;250m\]${USER}\
+\[${_e}[1;97m\]@\
+\[${_e}[0;38;2;140;206;250m\]${_sps_hostname} \
+\[${_e}[38;2;220;20;60m\]>\
+\[${_e}[0m\] "
+    else
+        PS1="\
+"'`_SPS_status_color``_SPS_status`'" \
+${_e}[0;95m${_sps_env} \
+${_e}[33m"'`_SPS_cwd`'" \
+${_e}[0;36m"'`_SPS_git_open_bracket`'"\
+${_e}[35m"'`_SPS_git_branch`'"\
+${_e}[0;97m"'`_SPS_git_sep`'"\
+"'`_SPS_git_status_color``_SPS_git_status`'"\
+${_e}[0;36m"'`_SPS_git_close_bracket`'"
+${_e}[38;2;140;206;250m${USER}\
+${_e}[1;97m@\
+${_e}[0;38;2;140;206;250m${_sps_hostname} \
+${_e}[38;2;220;20;60m>\
+${_e}[0m "
+    fi
 
 else # zsh
 
     setopt PROMPT_SUBST
 
     precmd() {
-        echo "$(_SPS_cmd_status) $(_SPS_env) $(_SPS_cwd) $(_SPS_git_bar)"
+        printf "\
+$(_SPS_status_color)$(_SPS_status) \
+\033[0;95m${_sps_env} \
+\033[33m$(_SPS_cwd) \
+\033[0;36m$(_SPS_git_open_bracket)\
+\033[35m$(_SPS_git_branch)\
+\033[0;97m$(_SPS_git_sep)\
+$(_SPS_git_status_color)$(_SPS_git_status)\
+\033[0;36m$(_SPS_git_close_bracket)
+"
     }
 
     PS1="%{${_e}[38;2;140;206;250m%}${USER}%{${_e}[1;97m%}@%{${_e}[0m${_e}[38;2;140;206;250m%}${_sps_hostname} %{${_e}[38;2;220;20;60m%}>%{${_e}[0m%} "
 fi
 
-unset _sps_hostname
+unset _e _sps_hostname
