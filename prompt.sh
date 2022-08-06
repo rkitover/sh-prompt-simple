@@ -1,7 +1,14 @@
 #!/bin/sh
 
-_sps_hostname=$(              hostname | sed -E 's/\..*//')
-_sps_domain_or_localnethost=$(hostname | sed -E '/\..*\./{ s/[^.]+\.//; b; }; s/\..*//')
+_sps_hostname=$(hostname | sed -E 's/\..*//')
+
+_sps_domain_or_localnet_host=$(hostname | sed -E '
+    /\..*\./{
+        s/[^.]+\.//
+        b
+    }
+    s/\..*//
+')
 
 if [ -f /proc/$$/exe ] && ls -l /proc/$$/exe 2>/dev/null | sed 's/.*-> //' | grep -Eq '(^|/)(busybox|bb|ginit|.?ash|ksh.*)$'; then
     _is_ash_or_ksh=1
@@ -272,7 +279,7 @@ _SPS_cwd() {
 _SPS_window_title() {
     [ "$SPS_WINDOW_TITLE" = 0 ] && return
 
-    printf "\033]0;${_sps_domain_or_localnethost}\007"
+    printf "\033]0;${_sps_domain_or_localnet_host}\007"
 }
 
 _SPS_detect_env
