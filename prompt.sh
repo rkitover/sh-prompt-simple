@@ -30,16 +30,24 @@ _SPS_quit() {
 
 trap "_SPS_quit" EXIT
 
+_SPS_uname_o() {
+    # macOS does not have `uname -o`.
+    uname -o 2>/dev/null || uname
+}
+
 _SPS_detect_non_linux_env() {
     if [ -n "$TERMUX_VERSION" ]; then
         echo TERMUX
         return
-    elif [ "$(uname -o)" = Msys ] && [ -n "$MSYSTEM" ]; then
+    elif [ "$(_SPS_uname_o)" = Darwin ]; then
+        echo macOS
+        return
+    elif [ "$(_SPS_uname_o)" = Msys ] && [ -n "$MSYSTEM" ]; then
         echo "$MSYSTEM"
         return
     fi
 
-    uname -o | sed -E 's/[[:space:][:punct:]]+/_/g' | \
+    uname | sed -E 's/[[:space:][:punct:]]+/_/g' | \
         tr '[:lower:]' '[:upper:]'
 }
 
@@ -108,7 +116,7 @@ _SPS_detect_distro() {
 }
 
 _SPS_detect_env() {
-    case "$(uname -o)" in
+    case "$(_SPS_uname_o)" in
         *Linux)
             _sps_env=$(_SPS_detect_distro)
             : ${_sps_env:=LINUX}
