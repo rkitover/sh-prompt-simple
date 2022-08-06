@@ -6,6 +6,7 @@
   - [configuration](#configuration)
     - [SPS_STATUS](#sps_status)
     - [SPS_ESCAPE](#sps_escape)
+    - [SPS_WINDOW_TITLE](#sps_window_title)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -96,3 +97,15 @@ SPS_ESCAPE=1
 ```
 . If you have a wide enough window, the prompt will work more or less ok without
 the escape sequences in shells that don't support them.
+
+#### SPS_WINDOW_TITLE
+
+By default the window title is set to the domain of the host or the hostname if
+on a local network (only two full hostname parts, such as `machine.localnet`.)
+To turn this off set:
+
+```bash
+SPS_WINDOW_TITLE=0
+```
+. This is a work in progress and I plan to expand this feature to allow for
+complex window titles using formats and evaluated variables/commands.

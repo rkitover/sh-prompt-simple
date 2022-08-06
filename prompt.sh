@@ -1,6 +1,7 @@
 #!/bin/sh
 
-_sps_hostname=$(hostname | sed 's/\..*//')
+_sps_hostname=$(              hostname | sed -E 's/\..*//')
+_sps_domain_or_localnethost=$(hostname | sed -E '/\..*\./{ s/[^.]+\.//; b; }; s/\..*//')
 
 if [ -f /proc/$$/exe ] && ls -l /proc/$$/exe 2>/dev/null | sed 's/.*-> //' | grep -Eq '(^|/)(busybox|bb|ginit|.?ash|ksh.*)$'; then
     _is_ash_or_ksh=1
@@ -11,6 +12,10 @@ if [ -z "$SPS_ESCAPE" ] && [ -n "${BASH_VERSION}${_is_ash_or_ksh}" ]; then
 fi
 
 unset _is_ash_or_ksh
+
+if [ -z "$SPS_WINDOW_TITLE" ]; then
+    SPS_WINDOW_TITLE=1
+fi
 
 _sps_tmp="${TMP:-${TEMP:-/tmp}}/sh-prompt-simple/$$"
 
@@ -264,6 +269,12 @@ _SPS_cwd() {
     esac
 }
 
+_SPS_window_title() {
+    [ "$SPS_WINDOW_TITLE" = 0 ] && return
+
+    printf "\033]0;${_sps_domain_or_localnethost}\007"
+}
+
 _SPS_detect_env
 
 : ${USER:=$(whoami)}
@@ -275,6 +286,7 @@ if [ -z "$ZSH_VERSION" ]; then
 
     if [ "$SPS_ESCAPE" = 1 ]; then
         PS1="\
+\["'`_SPS_window_title`'"\]\
 \["'`_SPS_status_color`'"\]"'`_SPS_status`'" \
 \[${_e}[0;95m\]${_sps_env} \
 \[${_e}[33m\]"'`_SPS_cwd`'" \
@@ -290,6 +302,7 @@ if [ -z "$ZSH_VERSION" ]; then
 \[${_e}[0m\] "
     else
         PS1="\
+"'`_SPS_window_title`'"\
 "'`_SPS_status_color``_SPS_status`'" \
 ${_e}[0;95m${_sps_env} \
 ${_e}[33m"'`_SPS_cwd`'" \
@@ -311,6 +324,7 @@ else # zsh
 
     precmd() {
         printf "\
+$(_SPS_window_title)\
 $(_SPS_status_color)$(_SPS_status) \
 \033[0;95m${_sps_env} \
 \033[33m$(_SPS_cwd) \
