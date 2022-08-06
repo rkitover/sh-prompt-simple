@@ -96,3 +96,28 @@ SPS_ESCAPE=1
 ```
 . If you have a wide enough window, the prompt will work more or less ok without
 the escape sequences in shells that don't support them.
+
+#### SPS_WINDOW_TITLE
+
+By default the window title is set to the short hostname at every prompt
+invocation, to turn this off set:
+
+```bash
+SPS_WINDOW_TITLE=0
+```
+, you can also set it to whatever string or command you want in your window
+title, it will be `eval`'d at every prompt invocation. Setting it to `1` will
+turn on the default behavior of using the short hostname.
+
+To set it to a command, do something like this:
+
+```bash
+SPS_WINDOW_TITLE='$(some_cmd | grep foo)`
+```
+, note the single quotes around the command expansion. You can also set it to
+expand a variable, for example:
+
+```bash
+SPS_WINDOW_TITLE='$SOME_VAR`
+```
+, note the single quotes again.

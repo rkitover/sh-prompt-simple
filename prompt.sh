@@ -1,6 +1,8 @@
 #!/bin/sh
 
-_sps_hostname=$(hostname | sed 's/\..*//')
+_sps_hostname=$(              hostname | sed -E 's/\..*//')
+_sps_domain=$(                hostname | sed -E 's/[^.]+\.//')
+_sps_domain_or_localnethost=$(hostname | sed -E '/\..*\./{ s/[^.]+\.//; b; }; s/\..*//')
 
 if [ -f /proc/$$/exe ] && ls -l /proc/$$/exe 2>/dev/null | sed 's/.*-> //' | grep -Eq '(^|/)(busybox|bb|ginit|.?ash|ksh.*)$'; then
     _is_ash_or_ksh=1
@@ -11,6 +13,10 @@ if [ -z "$SPS_ESCAPE" ] && [ -n "${BASH_VERSION}${_is_ash_or_ksh}" ]; then
 fi
 
 unset _is_ash_or_ksh
+
+if [ -z "$SPS_WINDOW_TITLE" ]; then
+    SPS_WINDOW_TITLE=1
+fi
 
 _sps_tmp="${TMP:-${TEMP:-/tmp}}/sh-prompt-simple/$$"
 
@@ -229,6 +235,12 @@ _SPS_git_branch() {
     git rev-parse --abbrev-ref HEAD 2>/dev/null
 }
 
+_SPS_git_project() {
+    ! _SPS_in_git_tree && return
+
+    echo ${PWD##*/}
+}
+
 _SPS_cwd() {
     case "$PWD" in
         "$HOME")
@@ -256,6 +268,75 @@ _SPS_cwd() {
     esac
 }
 
+_SPS_trim() {
+    sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//' "$@"
+}
+
+_SPS_window_title() {
+    [ "$SPS_WINDOW_TITLE" = 0 ] && return
+
+    printf "\033]0;${_sps_domain_or_localnethost}\007"
+    return
+
+    if [ "$SPS_WINDOW_TITLE" = 1 ]; then
+        printf "\033]0;${_sps_domain_or_localnethost}\007"
+    else
+        case "$SPS_WINDOW_TITLE" in
+            '#{'*)
+                # Process format.
+                _title_format_parts='hostname:$_sps_hostname host:$_sps_hostname domain:$_sps_domain domainname:$_sps_domain domain_or_localnethost:$_sps_domain_or_localnethost project:_SPS_git_project branch:_SPS_git_branch path:_SPS_cwd pwd:_SPS_cwd cwd:_SPS_cwd'
+
+                _str=${SPS_WINDOW_TITLE#'#{'}
+                _str=${_str%'}'}
+
+                _vars_empty=0
+                _first_non_empty=0
+
+                while :; do
+                    set -- $_title_format_parts
+
+                    for _format_var; do
+                        _var_name=${_format_var%%:*}
+                        _var_def=${_format_var%*:}
+
+                        _var_name_upper=$(echo "$_var_name" | tr '[:lower:]' '[:upper:]')
+
+                        _var_name_re="${_var_name}|${_var_name_upper}"
+
+                        case "$_var_def" in
+                            '$'*)
+                                _var_res=$(eval echo "$_var_def" | _SPS_trim)
+                                ;;
+                            *)
+                                _var_res=$(eval "$_var_def" | _SPS_trim)
+                                ;;
+                        esac
+
+                        if [ "$_first_non_empty" = 0 ] && [ -z "$_var_res" ]; then
+                            _vars_empty=1
+                        else
+                            _first_non_empty=1
+
+                            if [ $_vars_empty = 1 ]; then
+                                # Trim first part of format with empty vars
+                                _str=$(echo "$_str" | sed -E 's/(.*[^[:space:]]+[[:space:]]+)([^[:space:]]*%('$_var_name_re')%.*)/\2/')
+                            fi
+                        fi
+
+                        _str=$(echo "$_str" | sed -E 's/%('$_var_name_re')%/'"$_var_res"'/')
+                    done
+                done
+
+                unset _title_format_parts _str _vars_empty _first_non_empty _format_var _var_name _var_def _var_name_upper _var_name_re _var_res
+                ;;
+            *)
+                # Eval command.
+                printf "\033]0;$(eval echo "$SPS_WINDOW_TITLE")\007"
+                ;;
+        esac
+    fi
+}
+
 _SPS_detect_env
 
 : ${USER:=$(whoami)}
@@ -267,6 +348,7 @@ if [ -z "$ZSH_VERSION" ]; then
 
     if [ "$SPS_ESCAPE" = 1 ]; then
         PS1="\
+\["'`_SPS_window_title`'"\]\
 \["'`_SPS_status_color`'"\]"'`_SPS_status`'" \
 \[${_e}[0;95m\]${_sps_env} \
 \[${_e}[33m\]"'`_SPS_cwd`'" \
@@ -282,6 +364,7 @@ if [ -z "$ZSH_VERSION" ]; then
 \[${_e}[0m\] "
     else
         PS1="\
+"'`_SPS_window_title`'"\
 "'`_SPS_status_color``_SPS_status`'" \
 ${_e}[0;95m${_sps_env} \
 ${_e}[33m"'`_SPS_cwd`'" \
@@ -303,6 +386,7 @@ else # zsh
 
     precmd() {
         printf "\
+$(_SPS_window_title)\
 $(_SPS_status_color)$(_SPS_status) \
 \033[0;95m${_sps_env} \
 \033[33m$(_SPS_cwd) \
@@ -317,4 +401,4 @@ $(_SPS_git_status_color)$(_SPS_git_status)\
     PS1="%{${_e}[38;2;140;206;250m%}${USER}%{${_e}[1;97m%}@%{${_e}[0m${_e}[38;2;140;206;250m%}${_sps_hostname} %{${_e}[38;2;220;20;60m%}>%{${_e}[0m%} "
 fi
 
-unset _e _sps_hostname
+unset _e
