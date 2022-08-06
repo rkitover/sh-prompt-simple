@@ -34,12 +34,15 @@ _SPS_detect_non_linux_env() {
     if [ -n "$TERMUX_VERSION" ]; then
         echo TERMUX
         return
-    elif [ "$(uname -o)" = Msys ] && [ -n "$MSYSTEM" ]; then
+    elif [ "$(uname)" = Darwin ]; then
+        echo macOS
+        return
+    elif [ "$(uname)" = Msys ] && [ -n "$MSYSTEM" ]; then
         echo "$MSYSTEM"
         return
     fi
 
-    uname -o | sed -E 's/[[:space:][:punct:]]+/_/g' | \
+    uname | sed -E 's/[[:space:][:punct:]]+/_/g' | \
         tr '[:lower:]' '[:upper:]'
 }
 
@@ -108,7 +111,7 @@ _SPS_detect_distro() {
 }
 
 _SPS_detect_env() {
-    case "$(uname -o)" in
+    case "$(uname)" in
         *Linux)
             _sps_env=$(_SPS_detect_distro)
             : ${_sps_env:=LINUX}
