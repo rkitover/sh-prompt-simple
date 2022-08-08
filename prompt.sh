@@ -139,12 +139,18 @@ _SPS_detect_env() {
     esac
 }
 
-_SPS_status_color() {
+_SPS_get_status() {
     if [ "$?" -eq 0 ]; then
         echo 0 > "$_sps_tmp/cmd_status"
-        printf "\033[0;32m"
     else
         echo 1 > "$_sps_tmp/cmd_status"
+    fi
+}
+
+_SPS_status_color() {
+    if [ "$(cat "$_sps_tmp/cmd_status")" -eq 0 ]; then
+        printf "\033[0;32m"
+    else
         printf "\033[0;31m"
     fi
 }
@@ -293,6 +299,7 @@ if [ -z "$ZSH_VERSION" ]; then
 
     if [ "$SPS_ESCAPE" = 1 ]; then
         PS1="\
+"'`_SPS_get_status`'"\
 \["'`_SPS_window_title`'"\]\
 \["'`_SPS_status_color`'"\]"'`_SPS_status`'" \
 \[${_e}[0;95m\]${_sps_env} \
@@ -309,6 +316,7 @@ if [ -z "$ZSH_VERSION" ]; then
 \[${_e}[0m\] "
     else
         PS1="\
+"'`_SPS_get_status`'"\
 "'`_SPS_window_title`'"\
 "'`_SPS_status_color``_SPS_status`'" \
 ${_e}[0;95m${_sps_env} \
@@ -331,6 +339,7 @@ else # zsh
 
     precmd() {
         printf "\
+$(_SPS_get_status)\
 $(_SPS_window_title)\
 $(_SPS_status_color)$(_SPS_status) \
 \033[0;95m${_sps_env} \
