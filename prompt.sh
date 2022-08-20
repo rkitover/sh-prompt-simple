@@ -198,7 +198,7 @@ _SPS_git_status_color() {
         return
     fi
 
-    _status=$(LANG=C git status 2>/dev/null)
+    _status=$(LANG=C LC_ALL=C git status 2>/dev/null)
     _clean=
 
     if echo "$_status" | grep -Eq 'working tree clean'; then
