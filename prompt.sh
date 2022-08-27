@@ -164,6 +164,8 @@ _SPS_status() {
 }
 
 _SPS_in_git_tree() {
+    ! command -v git >/dev/null && return 1
+
     if [ -f "$_sps_tmp/in_git_tree" ]; then
         return "$(cat "$_sps_tmp/in_git_tree")"
     fi
