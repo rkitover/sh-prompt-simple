@@ -294,6 +294,10 @@ _SPS_detect_env
 
 : ${USER:=$(whoami)}
 
+_sps_char='>'
+
+[ "$(id -u)" = 0 ] && _sps_char='#'
+
 _e=$(printf "\033")
 
 if [ -z "$ZSH_VERSION" ]; then
@@ -314,7 +318,7 @@ if [ -z "$ZSH_VERSION" ]; then
 \[${_e}[38;2;140;206;250m\]${USER}\
 \[${_e}[1;97m\]@\
 \[${_e}[0;38;2;140;206;250m\]${_sps_hostname} \
-\[${_e}[38;2;220;20;60m\]>\
+\[${_e}[38;2;220;20;60m\]${_sps_char}\
 \[${_e}[0m\] "
     else
         PS1="\
@@ -331,7 +335,7 @@ ${_e}[0;36m"'`_SPS_git_close_bracket`'"
 ${_e}[38;2;140;206;250m${USER}\
 ${_e}[1;97m@\
 ${_e}[0;38;2;140;206;250m${_sps_hostname} \
-${_e}[38;2;220;20;60m>\
+${_e}[38;2;220;20;60m${_sps_char}\
 ${_e}[0m "
     fi
 
@@ -354,7 +358,7 @@ $(_SPS_git_status_color)$(_SPS_git_status)\
 "
     }
 
-    PS1="%{${_e}[38;2;140;206;250m%}${USER}%{${_e}[1;97m%}@%{${_e}[0m${_e}[38;2;140;206;250m%}${_sps_hostname} %{${_e}[38;2;220;20;60m%}>%{${_e}[0m%} "
+    PS1="%{${_e}[38;2;140;206;250m%}${USER}%{${_e}[1;97m%}@%{${_e}[0m${_e}[38;2;140;206;250m%}${_sps_hostname} %{${_e}[38;2;220;20;60m%}${_sps_char}%{${_e}[0m%} "
 fi
 
-unset _e _sps_hostname
+unset _e _sps_hostname _sps_char
