@@ -24,7 +24,7 @@ if [ -z "$SPS_WINDOW_TITLE" ]; then
     SPS_WINDOW_TITLE=1
 fi
 
-_sps_tmp="${TMP:-${TEMP:-/tmp}}/sh-prompt-simple/$$"
+_sps_tmp="${TMP:-${TEMP:-${TMPDIR:-/tmp}}}/sh-prompt-simple/$$"
 
 mkdir -p "$_sps_tmp"
 
