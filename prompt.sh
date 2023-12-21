@@ -49,18 +49,17 @@ _SPS_uname_o() {
 
 _SPS_detect_non_linux_env() {
     if [ -n "$TERMUX_VERSION" ]; then
-        echo TERMUX
+        echo Termux
         return
     elif [ "$(_SPS_uname_o)" = Darwin ]; then
         echo macOS
         return
     elif [ "$(_SPS_uname_o)" = Msys ] && [ -n "$MSYSTEM" ]; then
-        echo "$MSYSTEM"
+        echo "$MSYSTEM" | tr '[:upper:]' '[:lower:]'
         return
     fi
 
-    uname | sed -E 's/[[:space:][:punct:]]+/_/g' | \
-        tr '[:lower:]' '[:upper:]'
+    uname | sed -E 's/[[:space:][:punct:]]+/_/g'
 }
 
 _SPS_detect_distro() {
@@ -89,9 +88,9 @@ _SPS_detect_distro() {
         s/[[:space:][:punct:]]+$//
         s/^[[:space:][:punct:]]+//
 
-        # Normalize all SUSE products to SUSE.
+        # Normalize all suse products to suse.
 
-        s/.*(^|[[:space:][:punct:]])[Ss]USE($|[[:space:][:punct:]]).*/SUSE/i
+        s/.*(^|[[:space:][:punct:]])SUSE($|[[:space:][:punct:]]).*/suse/i
         t
 
         # Remove everyting before the first /, if what is after is
@@ -109,7 +108,7 @@ _SPS_detect_distro() {
         /^[^-]+-[^-]+$/!{
             s/[[:punct:]]+/_/g
         }
-    ' | tr '[:lower:]' '[:upper:]');
+    ');
 
     # If normalized name is longer than 15 characters, abbreviate
     # instead.
@@ -119,7 +118,7 @@ _SPS_detect_distro() {
             s/(^|[[:space:][:punct:]]+)([[:alpha:]])[[:alpha:]]+/\1\2/
             t abbrev
             s/[[:space:][:punct:]]+//g
-        ' | tr '[:lower:]' '[:upper:]')
+        ')
     fi
 
     echo "$normalized"
@@ -131,7 +130,7 @@ _SPS_detect_env() {
     case "$(_SPS_uname_o)" in
         *Linux)
             _sps_env=$(_SPS_detect_distro)
-            : ${_sps_env:=LINUX}
+            : ${_sps_env:=Linux}
             ;;
         *)
             _sps_env=$(_SPS_detect_non_linux_env)
