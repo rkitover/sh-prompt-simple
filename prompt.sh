@@ -57,6 +57,9 @@ _SPS_detect_non_linux_env() {
     elif [ "$(_SPS_uname_o)" = Msys ] && [ -n "$MSYSTEM" ]; then
         echo "$MSYSTEM" | tr '[:upper:]' '[:lower:]'
         return
+    elif [ "$(_SPS_uname_o)" = Cygwin ]; then
+        echo cygwin
+        return
     fi
 
     uname | sed -E 's/[[:space:][:punct:]]+/_/g'
