@@ -1,37 +1,110 @@
 #!/bin/sh
 
-_sps_hostname=$(hostname | sed -E 's/\..*//')
+_SPS_main() {
+    local hostname=$(hostname | sed -E 's/\..*//')
 
-_sps_domain_or_localnet_host=$(hostname | sed -E '
-    /\..*\./{
-        s/[^.]+\.//
-        b
-    }
-    s/\..*//
-')
+    _sps_domain_or_localnet_host=$(hostname | sed -E '
+        /\..*\./{
+            s/[^.]+\.//
+            b
+        }
+        s/\..*//
+    ')
 
-if [ -f /proc/$$/exe ] && ls -l /proc/$$/exe 2>/dev/null | sed 's/.*-> //' | grep -Eq '(^|/)(busybox|bb|ginit|.?ash|ksh.*)$'; then
-    _is_ash_or_ksh=1
-fi
+    if [ -f /proc/$$/exe ] && ls -l /proc/$$/exe 2>/dev/null | sed 's/.*-> //' | grep -Eq '(^|/)(busybox|bb|ginit|.?ash|ksh.*)$'; then
+        local is_ash_or_ksh=1
+    fi
 
-if [ -z "$SPS_ESCAPE" ] && [ -n "${BASH_VERSION}${_is_ash_or_ksh}" ]; then
-    SPS_ESCAPE=1
-fi
+    if [ -z "$SPS_ESCAPE" ] && [ -n "${BASH_VERSION}${is_ash_or_ksh}" ]; then
+        SPS_ESCAPE=1
+    fi
 
-unset _is_ash_or_ksh
+    if [ -z "$SPS_WINDOW_TITLE" ]; then
+        SPS_WINDOW_TITLE=1
+    fi
 
-if [ -z "$SPS_WINDOW_TITLE" ]; then
-    SPS_WINDOW_TITLE=1
-fi
+    _SPS_detect_env
 
-_sps_tmp="${TMP:-${TEMP:-${TMPDIR:-/tmp}}}/sh-prompt-simple/$$"
+    _sps_tmp="${TMP:-${TEMP:-${TMPDIR:-/tmp}}}/sh-prompt-simple/$$"
 
-mkdir -p "$_sps_tmp"
+    if [ "$_sps_env" = windows ] && [ -z "$_sps_tmp" ]; then
+        _sps_tmp=$(echo "$USERPROFILE/AppData/Local/Temp/sh-prompt-simple/$$" | tr '\\' '/')
+    fi
+
+    mkdir -p "$_sps_tmp"
+
+    : ${USER:=$(whoami)}
+
+    prompt_char='>'
+
+    [ "$(id -u)" = 0 ] && prompt_char='#'
+
+    _e=$(printf "\033")
+
+    if [ -z "$ZSH_VERSION" ]; then
+        if [ "$SPS_ESCAPE" = 1 ]; then
+            PS1="\
+"'`_SPS_get_status`'"\
+\["'`_SPS_window_title`'"\]\
+\["'`_SPS_status_color`'"\]"'`_SPS_status`'" \
+\[${_e}[0;95m\]${_sps_env} \
+\[${_e}[33m\]"'`_SPS_cwd`'" \
+\[${_e}[0;36m\]"'`_SPS_git_open_bracket`'"\
+\[${_e}[35m\]"'`_SPS_git_branch`'"\
+\[${_e}[0;97m\]"'`_SPS_git_sep`'"\
+\["'`_SPS_git_status_color`'"\]"'`_SPS_git_status`'"\
+\[${_e}[0;36m\]"'`_SPS_git_close_bracket`'"
+\[${_e}[38;2;140;206;250m\]${USER}\
+\[${_e}[1;97m\]@\
+\[${_e}[0;38;2;140;206;250m\]${hostname} \
+\[${_e}[38;2;220;20;60m\]${prompt_char}\
+\[${_e}[0m\] "
+        else
+            PS1="\
+"'`_SPS_get_status`'"\
+"'`_SPS_window_title`'"\
+"'`_SPS_status_color``_SPS_status`'" \
+${_e}[0;95m${_sps_env} \
+${_e}[33m"'`_SPS_cwd`'" \
+${_e}[0;36m"'`_SPS_git_open_bracket`'"\
+${_e}[35m"'`_SPS_git_branch`'"\
+${_e}[0;97m"'`_SPS_git_sep`'"\
+"'`_SPS_git_status_color``_SPS_git_status`'"\
+${_e}[0;36m"'`_SPS_git_close_bracket`'"
+${_e}[38;2;140;206;250m${USER}\
+${_e}[1;97m@\
+${_e}[0;38;2;140;206;250m${hostname} \
+${_e}[38;2;220;20;60m${prompt_char}\
+${_e}[0m "
+        fi
+
+    else # zsh
+
+        setopt PROMPT_SUBST
+
+        precmd() {
+            printf "\
+$(_SPS_get_status)\
+$(_SPS_window_title)\
+$(_SPS_status_color)$(_SPS_status) \
+\033[0;95m${_sps_env} \
+\033[33m$(_SPS_cwd) \
+\033[0;36m$(_SPS_git_open_bracket)\
+\033[35m$(_SPS_git_branch)\
+\033[0;97m$(_SPS_git_sep)\
+$(_SPS_git_status_color)$(_SPS_git_status)\
+\033[0;36m$(_SPS_git_close_bracket)
+    "
+        }
+
+        PS1="%{${_e}[38;2;140;206;250m%}${USER}%{${_e}[1;97m%}@%{${_e}[0m${_e}[38;2;140;206;250m%}${hostname} %{${_e}[38;2;220;20;60m%}${prompt_char}%{${_e}[0m%} "
+    fi
+}
 
 _SPS_quit() {
     rm -rf "$_sps_tmp"
 
-    tmp_root=${_sps_tmp%/*}
+    local tmp_root=${_sps_tmp%/*}
 
     if [ -z "$(find "$tmp_root" -mindepth 1 -type d)" ]; then
         rm -rf "$tmp_root"
@@ -49,7 +122,7 @@ _SPS_uname_o() {
 
 _SPS_detect_non_linux_env() {
     if [ -n "$TERMUX_VERSION" ]; then
-        echo Termux
+        echo termux
         return
     elif [ "$(_SPS_uname_o)" = Darwin ]; then
         echo macOS
@@ -60,6 +133,11 @@ _SPS_detect_non_linux_env() {
     elif [ "$(_SPS_uname_o)" = Cygwin ]; then
         echo cygwin
         return
+    elif echo "$(_SPS_uname_o)$(uname 2>/dev/null)" | grep -qi windows || \
+         [ -d /Windows/System32 ]; then
+        SPS_ESCAPE=1 # Possibly a busybox for Windows build.
+        echo windows
+        return
     fi
 
     uname | sed -E 's/[[:space:][:punct:]]+/_/g'
@@ -68,9 +146,9 @@ _SPS_detect_non_linux_env() {
 _SPS_detect_distro() {
     [ -f /etc/os-release ] || return
 
-    distro=$(sed -nE '/^ID="/s/^ID="([^"]+)".*/\1/p; s/^ID=([^[:space:]]+)/\1/p; t match; d; :match; q' /etc/os-release)
+    local distro=$(sed -nE '/^ID="/s/^ID="([^"]+)".*/\1/p; s/^ID=([^[:space:]]+)/\1/p; t match; d; :match; q' /etc/os-release)
 
-    normalized=$(echo "$distro" | sed -E '
+    local normalized=$(echo "$distro" | sed -E '
         # Remove all buzzwords and extraneous words.
 
         s/(GNU|Secure|open)//ig
@@ -125,15 +203,13 @@ _SPS_detect_distro() {
     fi
 
     echo "$normalized"
-
-    unset distro normalized
 }
 
 _SPS_detect_env() {
     case "$(_SPS_uname_o)" in
         *Linux)
             _sps_env=$(_SPS_detect_distro)
-            : ${_sps_env:=Linux}
+            : ${_sps_env:=linux}
             ;;
         *)
             _sps_env=$(_SPS_detect_non_linux_env)
@@ -172,13 +248,13 @@ _SPS_in_git_tree() {
         return "$(cat "$_sps_tmp/in_git_tree")"
     fi
 
-    OLDPWD=$PWD
+    local OLDPWD=$PWD
 
-    _matched=
+    local matched=
 
-    while [ "$PWD" != / ]; do
+    while ! (printf "$PWD" | grep -Eqi '^[[:alnum:]]+:[\/]$'); do
         if [ -d .git ]; then
-            _matched=1
+            matched=1
             break
         fi
         cd ..
@@ -186,14 +262,14 @@ _SPS_in_git_tree() {
 
     cd "$OLDPWD"
 
-    if [ -n "$_matched" ]; then
-        unset OLDPWD _matched
+    if [ -n "$matched" ]; then
         echo 0 > "$_sps_tmp/in_git_tree"
+
         return 0
     fi
 
-    unset OLDPWD _matched
     echo 1 > "$_sps_tmp/in_git_tree"
+
     return 1
 }
 
@@ -202,25 +278,23 @@ _SPS_git_status_color() {
         return
     fi
 
-    _status=$(LANG=C LC_ALL=C git status 2>/dev/null)
-    _clean=
+    status=$(LANG=C LC_ALL=C git status 2>/dev/null)
+    clean=
 
-    if echo "$_status" | grep -Eq 'working tree clean'; then
+    if echo "$status" | grep -Eq 'working tree clean'; then
         # For remote tracking branches, check that the branch is up-to-date with the remote branch.
-        if [ "$(echo "$_status" | wc -l)" -le 2 ] || echo "$_status" | grep -Eq '^Your branch is up to date with'; then
-            _clean=1
+        if [ "$(echo "$status" | wc -l)" -le 2 ] || echo "$status" | grep -Eq '^Your branch is up to date with'; then
+            clean=1
         fi
     fi
 
-    if [ -n "$_clean" ]; then
+    if [ -n "$clean" ]; then
         echo 0 > "$_sps_tmp/git_status"
         printf "\033[0;32m"
     else
         echo 1 > "$_sps_tmp/git_status"
         printf "\033[0;31m"
     fi
-
-    unset _status _clean
 }
 
 _SPS_git_status() {
@@ -265,12 +339,12 @@ _SPS_cwd() {
             printf '~'
             ;;
         "$HOME"/*)
-            _pwd=${PWD#$HOME}
+            local pwd=${PWD#$HOME}
 
             while :; do
-                case "$_pwd" in
+                case "$pwd" in
                     /*)
-                        _pwd=${_pwd#/}
+                        pwd=${pwd#/}
                         ;;
                     *)
                         break
@@ -278,7 +352,7 @@ _SPS_cwd() {
                 esac
             done
 
-            printf "~/${_pwd}"
+            printf "~/${pwd}"
             ;;
         *)
             printf "${PWD}"
@@ -292,75 +366,4 @@ _SPS_window_title() {
     printf "\033]0;${_sps_domain_or_localnet_host}\007"
 }
 
-_SPS_detect_env
-
-: ${USER:=$(whoami)}
-
-_sps_char='>'
-
-[ "$(id -u)" = 0 ] && _sps_char='#'
-
-_e=$(printf "\033")
-
-if [ -z "$ZSH_VERSION" ]; then
-
-
-    if [ "$SPS_ESCAPE" = 1 ]; then
-        PS1="\
-"'`_SPS_get_status`'"\
-\["'`_SPS_window_title`'"\]\
-\["'`_SPS_status_color`'"\]"'`_SPS_status`'" \
-\[${_e}[0;95m\]${_sps_env} \
-\[${_e}[33m\]"'`_SPS_cwd`'" \
-\[${_e}[0;36m\]"'`_SPS_git_open_bracket`'"\
-\[${_e}[35m\]"'`_SPS_git_branch`'"\
-\[${_e}[0;97m\]"'`_SPS_git_sep`'"\
-\["'`_SPS_git_status_color`'"\]"'`_SPS_git_status`'"\
-\[${_e}[0;36m\]"'`_SPS_git_close_bracket`'"
-\[${_e}[38;2;140;206;250m\]${USER}\
-\[${_e}[1;97m\]@\
-\[${_e}[0;38;2;140;206;250m\]${_sps_hostname} \
-\[${_e}[38;2;220;20;60m\]${_sps_char}\
-\[${_e}[0m\] "
-    else
-        PS1="\
-"'`_SPS_get_status`'"\
-"'`_SPS_window_title`'"\
-"'`_SPS_status_color``_SPS_status`'" \
-${_e}[0;95m${_sps_env} \
-${_e}[33m"'`_SPS_cwd`'" \
-${_e}[0;36m"'`_SPS_git_open_bracket`'"\
-${_e}[35m"'`_SPS_git_branch`'"\
-${_e}[0;97m"'`_SPS_git_sep`'"\
-"'`_SPS_git_status_color``_SPS_git_status`'"\
-${_e}[0;36m"'`_SPS_git_close_bracket`'"
-${_e}[38;2;140;206;250m${USER}\
-${_e}[1;97m@\
-${_e}[0;38;2;140;206;250m${_sps_hostname} \
-${_e}[38;2;220;20;60m${_sps_char}\
-${_e}[0m "
-    fi
-
-else # zsh
-
-    setopt PROMPT_SUBST
-
-    precmd() {
-        printf "\
-$(_SPS_get_status)\
-$(_SPS_window_title)\
-$(_SPS_status_color)$(_SPS_status) \
-\033[0;95m${_sps_env} \
-\033[33m$(_SPS_cwd) \
-\033[0;36m$(_SPS_git_open_bracket)\
-\033[35m$(_SPS_git_branch)\
-\033[0;97m$(_SPS_git_sep)\
-$(_SPS_git_status_color)$(_SPS_git_status)\
-\033[0;36m$(_SPS_git_close_bracket)
-"
-    }
-
-    PS1="%{${_e}[38;2;140;206;250m%}${USER}%{${_e}[1;97m%}@%{${_e}[0m${_e}[38;2;140;206;250m%}${_sps_hostname} %{${_e}[38;2;220;20;60m%}${_sps_char}%{${_e}[0m%} "
-fi
-
-unset _e _sps_hostname _sps_char
+_SPS_main
