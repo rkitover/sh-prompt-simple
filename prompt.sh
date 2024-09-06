@@ -252,7 +252,7 @@ _SPS_in_git_tree() {
 
     local matched=
 
-    while ! (printf "$PWD" | grep -Eqi '^[[:alnum:]]+:[\/]$'); do
+    while ! (printf "$PWD" | grep -Eqi '^([[:alnum:]]+:)?[\/]$'); do
         if [ -d .git ]; then
             matched=1
             break
