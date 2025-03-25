@@ -5,11 +5,7 @@ _SPS_main() {
 
     _sps_window_title="$(_SPS_domain_or_localnet_host)"
 
-    if [ -f /proc/$$/exe ] && ls -l /proc/$$/exe 2>/dev/null | sed 's/.*-> //' | grep -Eq '(^|/)(busybox|bb|ginit|.?ash|ksh.*)$'; then
-        local is_ash_or_ksh=1
-    fi
-
-    if [ -z "$SPS_ESCAPE" ] && [ -n "${BASH_VERSION}${is_ash_or_ksh}" ]; then
+    if [ -z "$SPS_ESCAPE" ] && _SPS_is_bash_or_ash_or_ksh; then
         SPS_ESCAPE=1
     fi
 
@@ -103,6 +99,18 @@ _SPS_domain_or_localnet_host() {
         }
         s/\..*//
     '
+}
+
+_SPS_is_bash_or_ash_or_ksh() {
+	[ "$BASH_VERSION" ] && return 0
+	_SPS_is_ash_or_ksh
+}
+
+_SPS_is_ash_or_ksh() {
+	[ -f /proc/$$/exe ] || return 1
+
+	readlink /proc/$$/exe 2>/dev/null \
+		| grep -Eq '(^|/)(busybox|bb|ginit|.?ash|ksh.*)$'
 }
 
 _SPS_quit() {
