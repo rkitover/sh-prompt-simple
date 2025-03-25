@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# STYLE GUIDE
+# SPS_SCREAMING_SNAKE_CASE  - user config environment variables (constants)
+# _SPS_SCREAMING_SNAKE_CASE - (global) constants
+# _sps_snake_case           - (global) variables
+# _SPS_snake_case           - functions
+
 _SPS_main() {
 	# init user config constants
 	_SPS_vet_sps_escape
