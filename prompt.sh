@@ -1,46 +1,27 @@
 #!/bin/sh
 
 _SPS_main() {
-	_SPS_set_sps_hostanme
-	_SPS_set_sps_window_title
+	# init user config constants
 	_SPS_vet_sps_escape
+
+	# init system constants
+	_SPS_vet_user
+	_SPS_set_sps_hostname
 	_SPS_set_sps_env
 	_SPS_set_sps_tmp
-	_SPS_vet_user
-	_SPS_set_sps_prompt_char
+
+	# init script constants
 	_SPS_set_sps_csi
+	_SPS_set_sps_prompt_char
+	_SPS_set_sps_window_title
+
+	# do action
 	_SPS_set_ps1
 }
 
-# _SPS_HOSTNAME
+# init user config constants
 
-_SPS_set_sps_hostanme() {
-	_SPS_HOSTNAME=$(hostname | sed -E 's/\..*//')
-}
-
-# _SPS_WINDOW_TITLE
-
-_SPS_set_sps_window_title() {
-	_SPS_WINDOW_TITLE="$(_SPS_domain_or_localnet_host)"
-}
-
-_SPS_domain_or_localnet_host() {
-	hostname | sed -E '
-		/\..*\./{
-			s/[^.]+\.//
-			b
-		}
-		s/\..*//
-	'
-}
-
-_SPS_window_title() {
-	[ "$SPS_WINDOW_TITLE" = 0 ] && return
-
-	printf '\033]0;%s\007' "$_SPS_WINDOW_TITLE"
-}
-
-# SPS_ESCAPE
+## SPS_ESCAPE
 
 _SPS_vet_sps_escape() {
 	if [ -z "$SPS_ESCAPE" ] && _SPS_is_bash_or_ash_or_ksh; then
@@ -60,7 +41,21 @@ _SPS_is_ash_or_ksh() {
 		| grep -Eq '(^|/)(busybox|bb|ginit|.?ash|ksh.*)$'
 }
 
-# _SPS_ENV
+# init system constants
+
+## USER
+
+_SPS_vet_user() {
+	: "${USER:=$(whoami)}"
+}
+
+## _SPS_HOSTNAME
+
+_SPS_set_sps_hostname() {
+	_SPS_HOSTNAME=$(hostname | sed -E 's/\..*//')
+}
+
+## _SPS_ENV
 
 _SPS_set_sps_env() {
 	case "$(_SPS_uname_o)" in
@@ -163,7 +158,7 @@ _SPS_is_windows() {
 	printf '%s' "$(_SPS_uname_o)$(uname 2>/dev/null)" | grep -qi 'windows'
 }
 
-# _SPS_TMP
+## _SPS_TMP
 
 _SPS_set_sps_tmp() {
 	_SPS_TMP="${TMP:-${TEMP:-${TMPDIR:-${XDG_RUNTIME_DIR:-/tmp}}}}/sh-prompt-simple/$$"
@@ -175,25 +170,45 @@ _SPS_set_sps_tmp() {
 	mkdir -p "$_SPS_TMP"
 }
 
-# USER
+# init script constants
 
-_SPS_vet_user() {
-	: "${USER:=$(whoami)}"
+## _SPS_CSI
+
+_SPS_set_sps_csi() {
+	_SPS_CSI="$(printf '\033')"
 }
 
-# _SPS_PROMPT_CHAR
+## _SPS_PROMPT_CHAR
 
 _SPS_set_sps_prompt_char() {
 	[ "$(id -u)" = 0 ] && _SPS_PROMPT_CHAR='#' || _SPS_PROMPT_CHAR='>'
 }
 
-# _SPS_CSI
-#
-_SPS_set_sps_csi() {
-	_SPS_CSI="$(printf '\033')"
+## _SPS_WINDOW_TITLE
+
+_SPS_set_sps_window_title() {
+	_SPS_WINDOW_TITLE="$(_SPS_domain_or_localnet_host)"
 }
 
-# PS1
+_SPS_domain_or_localnet_host() {
+	hostname | sed -E '
+		/\..*\./{
+			s/[^.]+\.//
+			b
+		}
+		s/\..*//
+	'
+}
+
+_SPS_window_title() {
+	[ "$SPS_WINDOW_TITLE" = 0 ] && return
+
+	printf '\033]0;%s\007' "$_SPS_WINDOW_TITLE"
+}
+
+# do action
+
+## PS1
 
 _SPS_set_ps1() {
 	if [ "$ZSH_VERSION" ]; then
@@ -205,6 +220,27 @@ _SPS_set_ps1() {
 			_SPS_set_ps1_not_zsh_without_escape
 		fi
 	fi
+}
+
+_SPS_set_ps1_zsh() {
+	setopt PROMPT_SUBST
+
+	precmd() {
+		printf "\
+$(_SPS_get_status)\
+$(_SPS_window_title)\
+$(_SPS_status_color)$(_SPS_status) \
+\033[0;95m${_SPS_ENV} \
+\033[33m$(_SPS_cwd) \
+\033[0;36m$(_SPS_git_open_bracket)\
+\033[35m$(_SPS_git_branch)\
+\033[0;97m$(_SPS_git_sep)\
+$(_SPS_git_status_color)$(_SPS_git_status)\
+\033[0;36m$(_SPS_git_close_bracket)
+"
+	}
+
+	PS1="%{${_SPS_CSI}[38;2;140;206;250m%}${USER}%{${_SPS_CSI}[1;97m%}@%{${_SPS_CSI}[0m${_SPS_CSI}[38;2;140;206;250m%}${_SPS_HOSTNAME} %{${_SPS_CSI}[38;2;220;20;60m%}${_SPS_PROMPT_CHAR}%{${_SPS_CSI}[0m%} "
 }
 
 _SPS_set_ps1_not_zsh_with_escape() {
@@ -243,27 +279,6 @@ ${_SPS_CSI}[1;97m@\
 ${_SPS_CSI}[0;38;2;140;206;250m${_SPS_HOSTNAME} \
 ${_SPS_CSI}[38;2;220;20;60m${_SPS_PROMPT_CHAR}\
 ${_SPS_CSI}[0m "
-}
-
-_SPS_set_ps1_zsh() {
-	setopt PROMPT_SUBST
-
-	precmd() {
-		printf "\
-$(_SPS_get_status)\
-$(_SPS_window_title)\
-$(_SPS_status_color)$(_SPS_status) \
-\033[0;95m${_SPS_ENV} \
-\033[33m$(_SPS_cwd) \
-\033[0;36m$(_SPS_git_open_bracket)\
-\033[35m$(_SPS_git_branch)\
-\033[0;97m$(_SPS_git_sep)\
-$(_SPS_git_status_color)$(_SPS_git_status)\
-\033[0;36m$(_SPS_git_close_bracket)
-"
-	}
-
-	PS1="%{${_SPS_CSI}[38;2;140;206;250m%}${USER}%{${_SPS_CSI}[1;97m%}@%{${_SPS_CSI}[0m${_SPS_CSI}[38;2;140;206;250m%}${_SPS_HOSTNAME} %{${_SPS_CSI}[38;2;220;20;60m%}${_SPS_PROMPT_CHAR}%{${_SPS_CSI}[0m%} "
 }
 
 _SPS_quit() {
