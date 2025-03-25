@@ -1,31 +1,24 @@
 #!/bin/sh
 
 _SPS_main() {
-	_SPS_HOSTNAME=$(hostname | sed -E 's/\..*//')
-
+	_SPS_set_sps_hostanme
 	_SPS_set_sps_window_title
 	_SPS_vet_sps_escape
 	_SPS_set_sps_env
 	_SPS_set_sps_tmp
-
-	: "${USER:=$(whoami)}"
-
-	[ "$(id -u)" = 0 ] && _SPS_PROMPT_CHAR='#' || _SPS_PROMPT_CHAR='>'
-
-	_SPS_CSI="$(printf '\033')"
-
-	if [ "$ZSH_VERSION" ]; then
-		_SPS_set_ps1_zsh
-	else
-		if [ "$SPS_ESCAPE" = 1 ]; then
-			_SPS_set_ps1_not_zsh_with_escape
-		else
-			_SPS_set_ps1_not_zsh_without_escape
-		fi
-	fi
+	_SPS_vet_user
+	_SPS_set_sps_prompt_char
+	_SPS_set_sps_csi
+	_SPS_set_ps1
 }
 
-# SPS_WINDOW_TITLE
+# _SPS_HOSTNAME
+
+_SPS_set_sps_hostanme() {
+	_SPS_HOSTNAME=$(hostname | sed -E 's/\..*//')
+}
+
+# _SPS_WINDOW_TITLE
 
 _SPS_set_sps_window_title() {
 	_SPS_WINDOW_TITLE="$(_SPS_domain_or_localnet_host)"
@@ -47,17 +40,17 @@ _SPS_window_title() {
 	printf '\033]0;%s\007' "$_SPS_WINDOW_TITLE"
 }
 
-_SPS_is_bash_or_ash_or_ksh() {
-	[ "$BASH_VERSION" ] && return 0
-	_SPS_is_ash_or_ksh
-}
-
 # SPS_ESCAPE
 
 _SPS_vet_sps_escape() {
 	if [ -z "$SPS_ESCAPE" ] && _SPS_is_bash_or_ash_or_ksh; then
 		SPS_ESCAPE=1
 	fi
+}
+
+_SPS_is_bash_or_ash_or_ksh() {
+	[ "$BASH_VERSION" ] && return 0
+	_SPS_is_ash_or_ksh
 }
 
 _SPS_is_ash_or_ksh() {
@@ -182,7 +175,37 @@ _SPS_set_sps_tmp() {
 	mkdir -p "$_SPS_TMP"
 }
 
+# USER
+
+_SPS_vet_user() {
+	: "${USER:=$(whoami)}"
+}
+
+# _SPS_PROMPT_CHAR
+
+_SPS_set_sps_prompt_char() {
+	[ "$(id -u)" = 0 ] && _SPS_PROMPT_CHAR='#' || _SPS_PROMPT_CHAR='>'
+}
+
+# _SPS_CSI
+#
+_SPS_set_sps_csi() {
+	_SPS_CSI="$(printf '\033')"
+}
+
 # PS1
+
+_SPS_set_ps1() {
+	if [ "$ZSH_VERSION" ]; then
+		_SPS_set_ps1_zsh
+	else
+		if [ "$SPS_ESCAPE" = 1 ]; then
+			_SPS_set_ps1_not_zsh_with_escape
+		else
+			_SPS_set_ps1_not_zsh_without_escape
+		fi
+	fi
+}
 
 _SPS_set_ps1_not_zsh_with_escape() {
 	PS1="\
@@ -237,7 +260,7 @@ $(_SPS_status_color)$(_SPS_status) \
 \033[0;97m$(_SPS_git_sep)\
 $(_SPS_git_status_color)$(_SPS_git_status)\
 \033[0;36m$(_SPS_git_close_bracket)
-	"
+"
 	}
 
 	PS1="%{${_SPS_CSI}[38;2;140;206;250m%}${USER}%{${_SPS_CSI}[1;97m%}@%{${_SPS_CSI}[0m${_SPS_CSI}[38;2;140;206;250m%}${_SPS_HOSTNAME} %{${_SPS_CSI}[38;2;220;20;60m%}${_SPS_PROMPT_CHAR}%{${_SPS_CSI}[0m%} "
