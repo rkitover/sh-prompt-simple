@@ -86,7 +86,7 @@ _SPS_get_linux_platform() {
 
 	_sps_linux_release="$(sed -nE '/^ID="/s/^ID="([^"]+)".*/\1/p; s/^ID=([^[:space:]]+)/\1/p; t match; d; :match; q' '/etc/os-release')"
 
-	_sps_linux_platform="$(echo "$_sps_linux_release" | sed -E '
+	_sps_linux_platform="$(printf '%s' "$_sps_linux_release" | sed -E '
 		# Remove all buzzwords and extraneous words.
 
 		s/(GNU|Secure|open)//ig
@@ -131,7 +131,7 @@ _SPS_get_linux_platform() {
 
 	# If normalized name is longer than 15 characters, abbreviate instead.
 	if [ "$(printf '%s' "$_sps_linux_platform" | wc -c)" -gt 15 ]; then
-		_sps_linux_platform="$(echo "$_sps_linux_release" | sed -E '
+		_sps_linux_platform="$(printf '%s' "$_sps_linux_release" | sed -E '
 			:abbrev
 			s/(^|[[:space:][:punct:]]+)([[:alpha:]])[[:alpha:]]+/\1\2/
 			t abbrev
@@ -144,16 +144,16 @@ _SPS_get_linux_platform() {
 
 _SPS_get_non_linux_platform() {
 	if [ -n "$TERMUX_VERSION" ]; then
-		echo 'termux'
+		printf '%s' 'termux'
 	elif [ "$(_SPS_uname_o)" = 'Darwin' ]; then
-		echo 'macOS'
+		printf '%s' 'macOS'
 	elif [ "$(_SPS_uname_o)" = 'Msys' ] && [ -n "$MSYSTEM" ]; then
-		echo "$MSYSTEM" | tr '[:upper:]' '[:lower:]'
+		printf '%s' "$MSYSTEM" | tr '[:upper:]' '[:lower:]'
 	elif [ "$(_SPS_uname_o)" = Cygwin ]; then
-		echo 'cygwin'
+		printf '%s' 'cygwin'
 	elif _SPS_is_windows; then
 		SPS_ESCAPE=1 # Possibly a busybox for Windows build.
-		echo 'windows'
+		printf '%s' 'windows'
 	else
 		uname | sed -E 's/[[:space:][:punct:]]+/_/g'
 	fi
@@ -171,7 +171,7 @@ _SPS_set_sps_tmp() {
 	_SPS_TMP="${TMP:-${TEMP:-${TMPDIR:-${XDG_RUNTIME_DIR:-/tmp}}}}/sh-prompt-simple/$$"
 
 	if [ "$_SPS_PLATFORM" = 'windows' ] && [ -z "$_SPS_TMP" ]; then
-		_SPS_TMP="$(echo "$USERPROFILE/AppData/Local/Temp/sh-prompt-simple/$$" | tr '\\' '/')"
+		_SPS_TMP="$(printf '%s' "$USERPROFILE/AppData/Local/Temp/sh-prompt-simple/$$" | tr '\\' '/')"
 	fi
 
 	mkdir -p "$_SPS_TMP"
@@ -308,9 +308,9 @@ trap "_SPS_quit" EXIT
 
 _SPS_get_status() {
 	if [ "$?" -eq 0 ]; then
-		echo 0 > "$_SPS_TMP/cmd_status"
+		printf '%s' 0 > "$_SPS_TMP/cmd_status"
 	else
-		echo 1 > "$_SPS_TMP/cmd_status"
+		printf '%s' 1 > "$_SPS_TMP/cmd_status"
 	fi
 }
 
@@ -352,12 +352,12 @@ _SPS_in_git_tree() {
 	cd "$OLDPWD"
 
 	if [ -n "$matched" ]; then
-		echo 0 > "$_SPS_TMP/in_git_tree"
+		printf '%s' 0 > "$_SPS_TMP/in_git_tree"
 
 		return 0
 	fi
 
-	echo 1 > "$_SPS_TMP/in_git_tree"
+	printf '%s' 1 > "$_SPS_TMP/in_git_tree"
 
 	return 1
 }
@@ -370,18 +370,18 @@ _SPS_git_status_color() {
 	status=$(LANG=C LC_ALL=C git status 2>/dev/null)
 	clean=
 
-	if echo "$status" | grep -Eq 'working tree clean'; then
+	if printf '%s' "$status" | grep -Eq 'working tree clean'; then
 		# For remote tracking branches, check that the branch is up-to-date with the remote branch.
-		if [ "$(echo "$status" | wc -l)" -le 2 ] || echo "$status" | grep -Eq '^Your branch is up to date with'; then
+		if [ "$(printf '%s' "$status" | wc -l)" -le 2 ] || printf '%s' "$status" | grep -Eq '^Your branch is up to date with'; then
 			clean=1
 		fi
 	fi
 
 	if [ -n "$clean" ]; then
-		echo 0 > "$_SPS_TMP/git_status"
+		printf '%s' 0 > "$_SPS_TMP/git_status"
 		printf "\033[0;32m"
 	else
-		echo 1 > "$_SPS_TMP/git_status"
+		printf '%s' 1 > "$_SPS_TMP/git_status"
 		printf "\033[0;31m"
 	fi
 }
