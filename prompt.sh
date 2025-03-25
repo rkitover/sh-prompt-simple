@@ -449,4 +449,44 @@ _SPS_cwd() {
 	esac
 }
 
+# colors
+# https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+# http://www.bashguru.com/2010/01/shell-colors-colorizing-shell-scripts.html
+# http://www.pixelbeat.org/docs/terminal_colours/
+
+# background-color
+SGR_BG_BLACK='\033[40m'
+SGR_BG_RED='\033[41m'
+SGR_BG_GREEN='\033[42m'
+SGR_BG_YELLOW='\033[43m'
+SGR_BG_BLUE='\033[44m'
+SGR_BG_MAGENTA='\033[45m'
+SGR_BG_CYAN='\033[46m'
+SGR_BG_WHITE='\033[47m'
+
+# (foreground) color
+SGR_FG_BLACK='\033[0;30m'
+SGR_FG_RED='\033[0;31m'
+SGR_FG_GREEN='\033[0;32m'
+SGR_FG_YELLOW='\033[0;33m'
+SGR_FG_BLUE='\033[0;34m'
+SGR_FG_MAGENTA='\033[0;35m'
+SGR_FG_CYAN='\033[0;36m'
+SGR_FG_GRAY='\033[0;37m'
+SGR_FG_DARK_GRAY='\033[1;30m'
+SGR_FG_BRIGHT_RED='\033[1;31m'
+SGR_FG_BRIGHT_GREEN='\033[1;32m'
+SGR_FG_BRIGHT_YELLOW='\033[1;33m'
+SGR_FG_BRIGHT_BLUE='\033[1;34m'
+SGR_FG_BRIGHT_MAGENTA='\033[1;35m'
+SGR_FG_BRIGHT_CYAN='\033[1;36m'
+SGR_FG_WHITE='\033[1;37m'
+
+# text-decoration
+SGR_TD_NORMAL='\033[0m'
+SGR_TD_BOLD='\033[1m'
+SGR_TD_UNDERLINE='\033[4m'
+SGR_TD_BLINK='\033[5m'
+SGR_TD_REVERSE='\033[7m'
+
 _SPS_main
