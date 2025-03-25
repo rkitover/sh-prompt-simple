@@ -3,14 +3,13 @@
 _SPS_main() {
     local hostname=$(hostname | sed -E 's/\..*//')
 
-	  _SPS_set_window_title
-		_SPS_vet_sps_escape
-
-    _SPS_detect_env
+    _SPS_set_sps_window_title
+    _SPS_vet_sps_escape
+    _SPS_set_sps_env
 
     _sps_tmp="${TMP:-${TEMP:-${TMPDIR:-/tmp}}}/sh-prompt-simple/$$"
 
-    if [ "$_sps_env" = windows ] && [ -z "$_sps_tmp" ]; then
+    if [ "$_SPS_ENV" = 'windows' ] && [ -z "$_sps_tmp" ]; then
         _sps_tmp=$(echo "$USERPROFILE/AppData/Local/Temp/sh-prompt-simple/$$" | tr '\\' '/')
     fi
 
@@ -30,7 +29,7 @@ _SPS_main() {
 "'`_SPS_get_status`'"\
 \["'`_SPS_window_title`'"\]\
 \["'`_SPS_status_color`'"\]"'`_SPS_status`'" \
-\[${_e}[0;95m\]${_sps_env} \
+\[${_e}[0;95m\]${_SPS_ENV} \
 \[${_e}[33m\]"'`_SPS_cwd`'" \
 \[${_e}[0;36m\]"'`_SPS_git_open_bracket`'"\
 \[${_e}[35m\]"'`_SPS_git_branch`'"\
@@ -47,7 +46,7 @@ _SPS_main() {
 "'`_SPS_get_status`'"\
 "'`_SPS_window_title`'"\
 "'`_SPS_status_color``_SPS_status`'" \
-${_e}[0;95m${_sps_env} \
+${_e}[0;95m${_SPS_ENV} \
 ${_e}[33m"'`_SPS_cwd`'" \
 ${_e}[0;36m"'`_SPS_git_open_bracket`'"\
 ${_e}[35m"'`_SPS_git_branch`'"\
@@ -70,7 +69,7 @@ ${_e}[0m "
 $(_SPS_get_status)\
 $(_SPS_window_title)\
 $(_SPS_status_color)$(_SPS_status) \
-\033[0;95m${_sps_env} \
+\033[0;95m${_SPS_ENV} \
 \033[33m$(_SPS_cwd) \
 \033[0;36m$(_SPS_git_open_bracket)\
 \033[35m$(_SPS_git_branch)\
@@ -86,12 +85,12 @@ $(_SPS_git_status_color)$(_SPS_git_status)\
 
 # SPS_WINDOW_TITLE
 
-_SPS_set_window_title() {
-	_SPS_WINDOW_TITLE="$(_SPS_domain_or_localnet_host)"
+_SPS_set_sps_window_title() {
+    _SPS_WINDOW_TITLE="$(_SPS_domain_or_localnet_host)"
 }
 
 _SPS_domain_or_localnet_host() {
-  	hostname | sed -E '
+      hostname | sed -E '
         /\..*\./{
             s/[^.]+\.//
             b
@@ -107,8 +106,8 @@ _SPS_window_title() {
 }
 
 _SPS_is_bash_or_ash_or_ksh() {
-	[ "$BASH_VERSION" ] && return 0
-	_SPS_is_ash_or_ksh
+    [ "$BASH_VERSION" ] && return 0
+    _SPS_is_ash_or_ksh
 }
 
 # SPS_ESCAPE
@@ -120,60 +119,37 @@ _SPS_vet_sps_escape() {
 }
 
 _SPS_is_ash_or_ksh() {
-	[ -f /proc/$$/exe ] || return 1
+    [ -f /proc/$$/exe ] || return 1
 
-	readlink /proc/$$/exe 2>/dev/null \
-		| grep -Eq '(^|/)(busybox|bb|ginit|.?ash|ksh.*)$'
+    readlink /proc/$$/exe 2>/dev/null \
+        | grep -Eq '(^|/)(busybox|bb|ginit|.?ash|ksh.*)$'
 }
 
-_SPS_quit() {
-    rm -rf "$_sps_tmp"
+# _SPS_ENV
 
-    local tmp_root=${_sps_tmp%/*}
-
-    if [ -z "$(find "$tmp_root" -mindepth 1 -type d)" ]; then
-        rm -rf "$tmp_root"
-    fi
-
-    return 0
+_SPS_set_sps_env() {
+    case "$(_SPS_uname_o)" in
+        *Linux)
+            _SPS_ENV=$(_SPS_detect_distro)
+            : "${_SPS_ENV:=linux}"
+            ;;
+        *)
+            _SPS_ENV=$(_SPS_detect_non_linux_env)
+            ;;
+    esac
 }
-
-trap "_SPS_quit" EXIT
 
 _SPS_uname_o() {
     # macOS does not have `uname -o`.
     uname -o 2>/dev/null || uname
 }
 
-_SPS_detect_non_linux_env() {
-    if [ -n "$TERMUX_VERSION" ]; then
-        echo termux
-        return
-    elif [ "$(_SPS_uname_o)" = Darwin ]; then
-        echo macOS
-        return
-    elif [ "$(_SPS_uname_o)" = Msys ] && [ -n "$MSYSTEM" ]; then
-        echo "$MSYSTEM" | tr '[:upper:]' '[:lower:]'
-        return
-    elif [ "$(_SPS_uname_o)" = Cygwin ]; then
-        echo cygwin
-        return
-    elif echo "$(_SPS_uname_o)$(uname 2>/dev/null)" | grep -qi windows || \
-         [ -d /Windows/System32 ]; then
-        SPS_ESCAPE=1 # Possibly a busybox for Windows build.
-        echo windows
-        return
-    fi
-
-    uname | sed -E 's/[[:space:][:punct:]]+/_/g'
-}
-
 _SPS_detect_distro() {
     [ -f /etc/os-release ] || return
 
-    local distro=$(sed -nE '/^ID="/s/^ID="([^"]+)".*/\1/p; s/^ID=([^[:space:]]+)/\1/p; t match; d; :match; q' /etc/os-release)
+    local distro="$(sed -nE '/^ID="/s/^ID="([^"]+)".*/\1/p; s/^ID=([^[:space:]]+)/\1/p; t match; d; :match; q' '/etc/os-release')"
 
-    local normalized=$(echo "$distro" | sed -E '
+    local normalized="$(echo "$distro" | sed -E '
         # Remove all buzzwords and extraneous words.
 
         s/(GNU|Secure|open)//ig
@@ -214,33 +190,60 @@ _SPS_detect_distro() {
         /^[^-]+-[^-]+$/!{
             s/[[:punct:]]+/_/g
         }
-    ');
+    ')";
 
-    # If normalized name is longer than 15 characters, abbreviate
-    # instead.
-    if [ "$(printf %s "$normalized" | wc -c)" -gt 15 ]; then
-        normalized=$(echo "$distro" | sed -E '
+    # If normalized name is longer than 15 characters, abbreviate instead.
+    if [ "$(printf '%s' "$normalized" | wc -c)" -gt 15 ]; then
+        normalized="$(echo "$distro" | sed -E '
             :abbrev
             s/(^|[[:space:][:punct:]]+)([[:alpha:]])[[:alpha:]]+/\1\2/
             t abbrev
             s/[[:space:][:punct:]]+//g
-        ')
+        ')"
     fi
 
-    echo "$normalized"
+    printf '%s' "$normalized"
 }
 
-_SPS_detect_env() {
-    case "$(_SPS_uname_o)" in
-        *Linux)
-            _sps_env=$(_SPS_detect_distro)
-            : ${_sps_env:=linux}
-            ;;
-        *)
-            _sps_env=$(_SPS_detect_non_linux_env)
-            ;;
-    esac
+_SPS_detect_non_linux_env() {
+    if [ -n "$TERMUX_VERSION" ]; then
+        echo 'termux'
+    elif [ "$(_SPS_uname_o)" = 'Darwin' ]; then
+        echo 'macOS'
+    elif [ "$(_SPS_uname_o)" = 'Msys' ] && [ -n "$MSYSTEM" ]; then
+        echo "$MSYSTEM" | tr '[:upper:]' '[:lower:]'
+    elif [ "$(_SPS_uname_o)" = Cygwin ]; then
+        echo 'cygwin'
+    elif _SPS_is_windows; then
+        SPS_ESCAPE=1 # Possibly a busybox for Windows build.
+        echo 'windows'
+    else
+        uname | sed -E 's/[[:space:][:punct:]]+/_/g'
+    fi
 }
+
+_SPS_is_windows() {
+    [ -d '/Windows/System32' ] && return 0
+
+    printf '%s' "$(_SPS_uname_o)$(uname 2>/dev/null)" | grep -qi 'windows'
+}
+
+
+
+_SPS_quit() {
+    rm -rf "$_sps_tmp"
+
+    local tmp_root=${_sps_tmp%/*}
+
+    if [ -z "$(find "$tmp_root" -mindepth 1 -type d)" ]; then
+        rm -rf "$tmp_root"
+    fi
+
+    return 0
+}
+
+trap "_SPS_quit" EXIT
+
 
 _SPS_get_status() {
     if [ "$?" -eq 0 ]; then
