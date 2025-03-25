@@ -8,10 +8,10 @@
 
 _SPS_main() {
 	# init user config constants
-	_SPS_vet_sps_escape
+	_SPS_set_sps_escape
 
 	# init system constants
-	_SPS_vet_user
+	_SPS_set_user
 	_SPS_set_sps_hostname
 	_SPS_set_sps_env
 	_SPS_set_sps_tmp
@@ -28,14 +28,15 @@ _SPS_main() {
 
 ## SPS_ESCAPE
 
-_SPS_vet_sps_escape() {
-	if [ -z "$SPS_ESCAPE" ] && _SPS_is_bash_or_ash_or_ksh; then
-		SPS_ESCAPE=1
-	fi
+_SPS_set_sps_escape() {
+	[ -n "$SPS_ESCAPE" ] && return 0
+
+	_SPS_is_bash_or_ash_or_ksh && SPS_ESCAPE=1
 }
 
 _SPS_is_bash_or_ash_or_ksh() {
 	[ "$BASH_VERSION" ] && return 0
+
 	_SPS_is_ash_or_ksh
 }
 
@@ -50,7 +51,7 @@ _SPS_is_ash_or_ksh() {
 
 ## USER
 
-_SPS_vet_user() {
+_SPS_set_user() {
 	: "${USER:=$(whoami)}"
 }
 
