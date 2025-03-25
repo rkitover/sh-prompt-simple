@@ -3,8 +3,8 @@
 
 # STYLE GUIDE
 # SPS_SCREAMING_SNAKE_CASE  - user config environment variables (constants)
-# _SPS_SCREAMING_SNAKE_CASE - (global) constants
-# _sps_snake_case           - (global) variables
+# _SPS_SCREAMING_SNAKE_CASE - (global) constants - does not change in a session
+# _sps_snake_case           - (global) variables - may change with each prompt
 # _SPS_snake_case           - functions
 
 _SPS_main() {
