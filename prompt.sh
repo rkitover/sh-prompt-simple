@@ -13,7 +13,6 @@ _SPS_main() {
 	# init script constants
 	_SPS_set_sps_csi
 	_SPS_set_sps_prompt_char
-	_SPS_set_sps_window_title
 
 	# do action
 	_SPS_set_ps1
@@ -184,13 +183,22 @@ _SPS_set_sps_prompt_char() {
 	[ "$(id -u)" = 0 ] && _SPS_PROMPT_CHAR='#' || _SPS_PROMPT_CHAR='>'
 }
 
-## _SPS_WINDOW_TITLE
+## SPS_WINDOW_TITLE
 
-_SPS_set_sps_window_title() {
-	_SPS_WINDOW_TITLE="$(_SPS_domain_or_localnet_host)"
+_SPS_window_title() {
+	[ "$SPS_WINDOW_TITLE" = 0 ] && return
+
+	printf '\033]0;%s\007' "$(_SPS_domain_or_localnet_host)"
 }
 
 _SPS_domain_or_localnet_host() {
+	[ -z "$_SPS_DOMAIN_OR_LOCALNET_HOST" ] \
+		&& _SPS_DOMAIN_OR_LOCALNET_HOST="$(_SPS_get_domain_or_localnet_host)"
+
+	printf '%s' "$_SPS_DOMAIN_OR_LOCALNET_HOST"
+}
+
+_SPS_get_domain_or_localnet_host() {
 	hostname | sed -E '
 		/\..*\./{
 			s/[^.]+\.//
@@ -198,12 +206,6 @@ _SPS_domain_or_localnet_host() {
 		}
 		s/\..*//
 	'
-}
-
-_SPS_window_title() {
-	[ "$SPS_WINDOW_TITLE" = 0 ] && return
-
-	printf '\033]0;%s\007' "$_SPS_WINDOW_TITLE"
 }
 
 # do action
