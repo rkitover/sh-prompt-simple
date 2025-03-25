@@ -3,7 +3,7 @@
 _SPS_main() {
     local hostname=$(hostname | sed -E 's/\..*//')
 
-    _sps_window_title="$(_SPS_domain_or_localnet_host)"
+	  _SPS_set_window_title
 
     if [ -z "$SPS_ESCAPE" ] && _SPS_is_bash_or_ash_or_ksh; then
         SPS_ESCAPE=1
@@ -87,6 +87,12 @@ $(_SPS_git_status_color)$(_SPS_git_status)\
     fi
 }
 
+# SPS_WINDOW_TITLE
+
+_SPS_set_window_title() {
+	_SPS_WINDOW_TITLE="$(_SPS_domain_or_localnet_host)"
+}
+
 _SPS_domain_or_localnet_host() {
   	hostname | sed -E '
         /\..*\./{
@@ -95,6 +101,12 @@ _SPS_domain_or_localnet_host() {
         }
         s/\..*//
     '
+}
+
+_SPS_window_title() {
+    [ "$SPS_WINDOW_TITLE" = 0 ] && return
+
+    printf '\033]0;%s\007' "$_SPS_WINDOW_TITLE"
 }
 
 _SPS_is_bash_or_ash_or_ksh() {
@@ -366,12 +378,6 @@ _SPS_cwd() {
             printf "${PWD}"
             ;;
     esac
-}
-
-_SPS_window_title() {
-    [ "$SPS_WINDOW_TITLE" = 0 ] && return
-
-    printf '\033]0;%s\007' "$_sps_window_title"
 }
 
 _SPS_main
