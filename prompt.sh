@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck shell=sh
 
 # STYLE GUIDE
 # SPS_SCREAMING_SNAKE_CASE  - user config environment variables (constants)
@@ -13,7 +14,7 @@ _SPS_main() {
 	# init system constants
 	_SPS_set_user
 	_SPS_set_sps_hostname
-	_SPS_set_sps_env
+	_SPS_set_sps_platform
 	_SPS_set_sps_tmp
 
 	# init script constants
@@ -61,16 +62,16 @@ _SPS_set_sps_hostname() {
 	_SPS_HOSTNAME=$(hostname | sed -E 's/\..*//')
 }
 
-## _SPS_ENV
+## _SPS_PLATFORM
 
-_SPS_set_sps_env() {
+_SPS_set_sps_platform() {
 	case "$(_SPS_uname_o)" in
 		*Linux)
-			_SPS_ENV=$(_SPS_detect_distro)
-			: "${_SPS_ENV:=linux}"
+			_SPS_PLATFORM=$(_SPS_get_linux_platform)
+			: "${_SPS_PLATFORM:=linux}"
 			;;
 		*)
-			_SPS_ENV=$(_SPS_detect_non_linux_env)
+			_SPS_PLATFORM=$(_SPS_get_non_linux_platform)
 			;;
 	esac
 }
@@ -80,12 +81,12 @@ _SPS_uname_o() {
 	uname -o 2>/dev/null || uname
 }
 
-_SPS_detect_distro() {
-	[ -f /etc/os-release ] || return
+_SPS_get_linux_platform() {
+	[ -f '/etc/os-release' ] || return
 
-	local distro="$(sed -nE '/^ID="/s/^ID="([^"]+)".*/\1/p; s/^ID=([^[:space:]]+)/\1/p; t match; d; :match; q' '/etc/os-release')"
+	_sps_linux_release="$(sed -nE '/^ID="/s/^ID="([^"]+)".*/\1/p; s/^ID=([^[:space:]]+)/\1/p; t match; d; :match; q' '/etc/os-release')"
 
-	local normalized="$(echo "$distro" | sed -E '
+	_sps_linux_platform="$(echo "$_sps_linux_release" | sed -E '
 		# Remove all buzzwords and extraneous words.
 
 		s/(GNU|Secure|open)//ig
@@ -129,8 +130,8 @@ _SPS_detect_distro() {
 	')";
 
 	# If normalized name is longer than 15 characters, abbreviate instead.
-	if [ "$(printf '%s' "$normalized" | wc -c)" -gt 15 ]; then
-		normalized="$(echo "$distro" | sed -E '
+	if [ "$(printf '%s' "$_sps_linux_platform" | wc -c)" -gt 15 ]; then
+		_sps_linux_platform="$(echo "$_sps_linux_release" | sed -E '
 			:abbrev
 			s/(^|[[:space:][:punct:]]+)([[:alpha:]])[[:alpha:]]+/\1\2/
 			t abbrev
@@ -138,10 +139,10 @@ _SPS_detect_distro() {
 		')"
 	fi
 
-	printf '%s' "$normalized"
+	printf '%s' "$_sps_linux_platform"
 }
 
-_SPS_detect_non_linux_env() {
+_SPS_get_non_linux_platform() {
 	if [ -n "$TERMUX_VERSION" ]; then
 		echo 'termux'
 	elif [ "$(_SPS_uname_o)" = 'Darwin' ]; then
@@ -169,7 +170,7 @@ _SPS_is_windows() {
 _SPS_set_sps_tmp() {
 	_SPS_TMP="${TMP:-${TEMP:-${TMPDIR:-${XDG_RUNTIME_DIR:-/tmp}}}}/sh-prompt-simple/$$"
 
-	if [ "$_SPS_ENV" = 'windows' ] && [ -z "$_SPS_TMP" ]; then
+	if [ "$_SPS_PLATFORM" = 'windows' ] && [ -z "$_SPS_TMP" ]; then
 		_SPS_TMP="$(echo "$USERPROFILE/AppData/Local/Temp/sh-prompt-simple/$$" | tr '\\' '/')"
 	fi
 
@@ -239,7 +240,7 @@ _SPS_set_ps1_zsh() {
 $(_SPS_get_status)\
 $(_SPS_window_title)\
 $(_SPS_status_color)$(_SPS_status) \
-\033[0;95m${_SPS_ENV} \
+\033[0;95m${_SPS_PLATFORM} \
 \033[33m$(_SPS_cwd) \
 \033[0;36m$(_SPS_git_open_bracket)\
 \033[35m$(_SPS_git_branch)\
@@ -257,7 +258,7 @@ _SPS_set_ps1_not_zsh_with_escape() {
 "'`_SPS_get_status`'"\
 \["'`_SPS_window_title`'"\]\
 \["'`_SPS_status_color`'"\]"'`_SPS_status`'" \
-\[${_SPS_CSI}[0;95m\]${_SPS_ENV} \
+\[${_SPS_CSI}[0;95m\]${_SPS_PLATFORM} \
 \[${_SPS_CSI}[33m\]"'`_SPS_cwd`'" \
 \[${_SPS_CSI}[0;36m\]"'`_SPS_git_open_bracket`'"\
 \[${_SPS_CSI}[35m\]"'`_SPS_git_branch`'"\
@@ -276,7 +277,7 @@ _SPS_set_ps1_not_zsh_without_escape() {
 "'`_SPS_get_status`'"\
 "'`_SPS_window_title`'"\
 "'`_SPS_status_color``_SPS_status`'" \
-${_SPS_CSI}[0;95m${_SPS_ENV} \
+${_SPS_CSI}[0;95m${_SPS_PLATFORM} \
 ${_SPS_CSI}[33m"'`_SPS_cwd`'" \
 ${_SPS_CSI}[0;36m"'`_SPS_git_open_bracket`'"\
 ${_SPS_CSI}[35m"'`_SPS_git_branch`'"\
