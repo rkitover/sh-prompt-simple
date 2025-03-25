@@ -1,7 +1,7 @@
 #!/bin/sh
 
 _SPS_main() {
-    local hostname=$(hostname | sed -E 's/\..*//')
+    _SPS_HOSTNAME=$(hostname | sed -E 's/\..*//')
 
     _SPS_set_sps_window_title
     _SPS_vet_sps_escape
@@ -10,67 +10,18 @@ _SPS_main() {
 
     : "${USER:=$(whoami)}"
 
-    [ "$(id -u)" = 0 ] && prompt_char='#' || prompt_char='>'
+    [ "$(id -u)" = 0 ] && _SPS_PROMPT_CHAR='#' || _SPS_PROMPT_CHAR='>'
 
-    csi="$(printf "\033")"
+    _SPS_CSI="$(printf '\033')"
 
-    if [ -z "$ZSH_VERSION" ]; then
+    if [ "$ZSH_VERSION" ]; then
+        _SPS_set_ps1_zsh
+    else
         if [ "$SPS_ESCAPE" = 1 ]; then
-            PS1="\
-"'`_SPS_get_status`'"\
-\["'`_SPS_window_title`'"\]\
-\["'`_SPS_status_color`'"\]"'`_SPS_status`'" \
-\[${csi}[0;95m\]${_SPS_ENV} \
-\[${csi}[33m\]"'`_SPS_cwd`'" \
-\[${csi}[0;36m\]"'`_SPS_git_open_bracket`'"\
-\[${csi}[35m\]"'`_SPS_git_branch`'"\
-\[${csi}[0;97m\]"'`_SPS_git_sep`'"\
-\["'`_SPS_git_status_color`'"\]"'`_SPS_git_status`'"\
-\[${csi}[0;36m\]"'`_SPS_git_close_bracket`'"
-\[${csi}[38;2;140;206;250m\]${USER}\
-\[${csi}[1;97m\]@\
-\[${csi}[0;38;2;140;206;250m\]${hostname} \
-\[${csi}[38;2;220;20;60m\]${prompt_char}\
-\[${csi}[0m\] "
+            _SPS_set_ps1_not_zsh_with_escape
         else
-            PS1="\
-"'`_SPS_get_status`'"\
-"'`_SPS_window_title`'"\
-"'`_SPS_status_color``_SPS_status`'" \
-${csi}[0;95m${_SPS_ENV} \
-${csi}[33m"'`_SPS_cwd`'" \
-${csi}[0;36m"'`_SPS_git_open_bracket`'"\
-${csi}[35m"'`_SPS_git_branch`'"\
-${csi}[0;97m"'`_SPS_git_sep`'"\
-"'`_SPS_git_status_color``_SPS_git_status`'"\
-${csi}[0;36m"'`_SPS_git_close_bracket`'"
-${csi}[38;2;140;206;250m${USER}\
-${csi}[1;97m@\
-${csi}[0;38;2;140;206;250m${hostname} \
-${csi}[38;2;220;20;60m${prompt_char}\
-${csi}[0m "
+            _SPS_set_ps1_not_zsh_without_escape
         fi
-
-    else # zsh
-
-        setopt PROMPT_SUBST
-
-        precmd() {
-            printf "\
-$(_SPS_get_status)\
-$(_SPS_window_title)\
-$(_SPS_status_color)$(_SPS_status) \
-\033[0;95m${_SPS_ENV} \
-\033[33m$(_SPS_cwd) \
-\033[0;36m$(_SPS_git_open_bracket)\
-\033[35m$(_SPS_git_branch)\
-\033[0;97m$(_SPS_git_sep)\
-$(_SPS_git_status_color)$(_SPS_git_status)\
-\033[0;36m$(_SPS_git_close_bracket)
-    "
-        }
-
-        PS1="%{${csi}[38;2;140;206;250m%}${USER}%{${csi}[1;97m%}@%{${csi}[0m${csi}[38;2;140;206;250m%}${hostname} %{${csi}[38;2;220;20;60m%}${prompt_char}%{${csi}[0m%} "
     fi
 }
 
@@ -81,7 +32,7 @@ _SPS_set_sps_window_title() {
 }
 
 _SPS_domain_or_localnet_host() {
-      hostname | sed -E '
+    hostname | sed -E '
         /\..*\./{
             s/[^.]+\.//
             b
@@ -229,6 +180,67 @@ _SPS_set_sps_tmp() {
     fi
 
     mkdir -p "$_SPS_TMP"
+}
+
+# PS1
+
+_SPS_set_ps1_not_zsh_with_escape() {
+    PS1="\
+"'`_SPS_get_status`'"\
+\["'`_SPS_window_title`'"\]\
+\["'`_SPS_status_color`'"\]"'`_SPS_status`'" \
+\[${_SPS_CSI}[0;95m\]${_SPS_ENV} \
+\[${_SPS_CSI}[33m\]"'`_SPS_cwd`'" \
+\[${_SPS_CSI}[0;36m\]"'`_SPS_git_open_bracket`'"\
+\[${_SPS_CSI}[35m\]"'`_SPS_git_branch`'"\
+\[${_SPS_CSI}[0;97m\]"'`_SPS_git_sep`'"\
+\["'`_SPS_git_status_color`'"\]"'`_SPS_git_status`'"\
+\[${_SPS_CSI}[0;36m\]"'`_SPS_git_close_bracket`'"
+\[${_SPS_CSI}[38;2;140;206;250m\]${USER}\
+\[${_SPS_CSI}[1;97m\]@\
+\[${_SPS_CSI}[0;38;2;140;206;250m\]${_SPS_HOSTNAME} \
+\[${_SPS_CSI}[38;2;220;20;60m\]${_SPS_PROMPT_CHAR}\
+\[${_SPS_CSI}[0m\] "
+}
+
+_SPS_set_ps1_not_zsh_without_escape() {
+    PS1="\
+"'`_SPS_get_status`'"\
+"'`_SPS_window_title`'"\
+"'`_SPS_status_color``_SPS_status`'" \
+${_SPS_CSI}[0;95m${_SPS_ENV} \
+${_SPS_CSI}[33m"'`_SPS_cwd`'" \
+${_SPS_CSI}[0;36m"'`_SPS_git_open_bracket`'"\
+${_SPS_CSI}[35m"'`_SPS_git_branch`'"\
+${_SPS_CSI}[0;97m"'`_SPS_git_sep`'"\
+"'`_SPS_git_status_color``_SPS_git_status`'"\
+${_SPS_CSI}[0;36m"'`_SPS_git_close_bracket`'"
+${_SPS_CSI}[38;2;140;206;250m${USER}\
+${_SPS_CSI}[1;97m@\
+${_SPS_CSI}[0;38;2;140;206;250m${_SPS_HOSTNAME} \
+${_SPS_CSI}[38;2;220;20;60m${_SPS_PROMPT_CHAR}\
+${_SPS_CSI}[0m "
+}
+
+_SPS_set_ps1_zsh() {
+    setopt PROMPT_SUBST
+
+    precmd() {
+        printf "\
+$(_SPS_get_status)\
+$(_SPS_window_title)\
+$(_SPS_status_color)$(_SPS_status) \
+\033[0;95m${_SPS_ENV} \
+\033[33m$(_SPS_cwd) \
+\033[0;36m$(_SPS_git_open_bracket)\
+\033[35m$(_SPS_git_branch)\
+\033[0;97m$(_SPS_git_sep)\
+$(_SPS_git_status_color)$(_SPS_git_status)\
+\033[0;36m$(_SPS_git_close_bracket)
+    "
+    }
+
+    PS1="%{${_SPS_CSI}[38;2;140;206;250m%}${USER}%{${_SPS_CSI}[1;97m%}@%{${_SPS_CSI}[0m${_SPS_CSI}[38;2;140;206;250m%}${_SPS_HOSTNAME} %{${_SPS_CSI}[38;2;220;20;60m%}${_SPS_PROMPT_CHAR}%{${_SPS_CSI}[0m%} "
 }
 
 _SPS_quit() {
