@@ -4,10 +4,7 @@ _SPS_main() {
     local hostname=$(hostname | sed -E 's/\..*//')
 
 	  _SPS_set_window_title
-
-    if [ -z "$SPS_ESCAPE" ] && _SPS_is_bash_or_ash_or_ksh; then
-        SPS_ESCAPE=1
-    fi
+		_SPS_vet_sps_escape
 
     _SPS_detect_env
 
@@ -112,6 +109,14 @@ _SPS_window_title() {
 _SPS_is_bash_or_ash_or_ksh() {
 	[ "$BASH_VERSION" ] && return 0
 	_SPS_is_ash_or_ksh
+}
+
+# SPS_ESCAPE
+
+_SPS_vet_sps_escape() {
+    if [ -z "$SPS_ESCAPE" ] && _SPS_is_bash_or_ash_or_ksh; then
+        SPS_ESCAPE=1
+    fi
 }
 
 _SPS_is_ash_or_ksh() {
