@@ -9,10 +9,6 @@ _SPS_main() {
         SPS_ESCAPE=1
     fi
 
-    if [ -z "$SPS_WINDOW_TITLE" ]; then
-        SPS_WINDOW_TITLE=1
-    fi
-
     _SPS_detect_env
 
     _sps_tmp="${TMP:-${TEMP:-${TMPDIR:-/tmp}}}/sh-prompt-simple/$$"
