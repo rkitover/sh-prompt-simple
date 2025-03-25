@@ -371,7 +371,7 @@ _SPS_cwd() {
 _SPS_window_title() {
     [ "$SPS_WINDOW_TITLE" = 0 ] && return
 
-    printf "\033]0;${_sps_window_title}\007"
+    printf '\033]0;%s\007' "$_sps_window_title"
 }
 
 _SPS_main
