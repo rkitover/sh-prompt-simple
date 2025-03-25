@@ -3,13 +3,7 @@
 _SPS_main() {
     local hostname=$(hostname | sed -E 's/\..*//')
 
-    _sps_domain_or_localnet_host=$(hostname | sed -E '
-        /\..*\./{
-            s/[^.]+\.//
-            b
-        }
-        s/\..*//
-    ')
+    _sps_window_title="$(_SPS_domain_or_localnet_host)"
 
     if [ -f /proc/$$/exe ] && ls -l /proc/$$/exe 2>/dev/null | sed 's/.*-> //' | grep -Eq '(^|/)(busybox|bb|ginit|.?ash|ksh.*)$'; then
         local is_ash_or_ksh=1
@@ -99,6 +93,16 @@ $(_SPS_git_status_color)$(_SPS_git_status)\
 
         PS1="%{${_e}[38;2;140;206;250m%}${USER}%{${_e}[1;97m%}@%{${_e}[0m${_e}[38;2;140;206;250m%}${hostname} %{${_e}[38;2;220;20;60m%}${prompt_char}%{${_e}[0m%} "
     fi
+}
+
+_SPS_domain_or_localnet_host() {
+  	hostname | sed -E '
+        /\..*\./{
+            s/[^.]+\.//
+            b
+        }
+        s/\..*//
+    '
 }
 
 _SPS_quit() {
@@ -363,7 +367,7 @@ _SPS_cwd() {
 _SPS_window_title() {
     [ "$SPS_WINDOW_TITLE" = 0 ] && return
 
-    printf "\033]0;${_sps_domain_or_localnet_host}\007"
+    printf "\033]0;${_sps_window_title}\007"
 }
 
 _SPS_main
