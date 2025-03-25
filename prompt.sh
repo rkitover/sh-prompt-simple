@@ -6,14 +6,8 @@ _SPS_main() {
     _SPS_set_sps_window_title
     _SPS_vet_sps_escape
     _SPS_set_sps_env
+    _SPS_set_sps_tmp
 
-    _sps_tmp="${TMP:-${TEMP:-${TMPDIR:-/tmp}}}/sh-prompt-simple/$$"
-
-    if [ "$_SPS_ENV" = 'windows' ] && [ -z "$_sps_tmp" ]; then
-        _sps_tmp=$(echo "$USERPROFILE/AppData/Local/Temp/sh-prompt-simple/$$" | tr '\\' '/')
-    fi
-
-    mkdir -p "$_sps_tmp"
 
     : ${USER:=$(whoami)}
 
@@ -228,12 +222,22 @@ _SPS_is_windows() {
     printf '%s' "$(_SPS_uname_o)$(uname 2>/dev/null)" | grep -qi 'windows'
 }
 
+# _SPS_TMP
 
+_SPS_set_sps_tmp() {
+    _SPS_TMP="${TMP:-${TEMP:-${TMPDIR:-${XDG_RUNTIME_DIR:-/tmp}}}}/sh-prompt-simple/$$"
+
+    if [ "$_SPS_ENV" = 'windows' ] && [ -z "$_SPS_TMP" ]; then
+        _SPS_TMP="$(echo "$USERPROFILE/AppData/Local/Temp/sh-prompt-simple/$$" | tr '\\' '/')"
+    fi
+
+    mkdir -p "$_SPS_TMP"
+}
 
 _SPS_quit() {
-    rm -rf "$_sps_tmp"
+    rm -rf "$_SPS_TMP"
 
-    local tmp_root=${_sps_tmp%/*}
+    local tmp_root=${_SPS_TMP%/*}
 
     if [ -z "$(find "$tmp_root" -mindepth 1 -type d)" ]; then
         rm -rf "$tmp_root"
@@ -247,14 +251,14 @@ trap "_SPS_quit" EXIT
 
 _SPS_get_status() {
     if [ "$?" -eq 0 ]; then
-        echo 0 > "$_sps_tmp/cmd_status"
+        echo 0 > "$_SPS_TMP/cmd_status"
     else
-        echo 1 > "$_sps_tmp/cmd_status"
+        echo 1 > "$_SPS_TMP/cmd_status"
     fi
 }
 
 _SPS_status_color() {
-    if [ "$(cat "$_sps_tmp/cmd_status")" -eq 0 ]; then
+    if [ "$(cat "$_SPS_TMP/cmd_status")" -eq 0 ]; then
         printf "\033[0;32m"
     else
         printf "\033[0;31m"
@@ -262,7 +266,7 @@ _SPS_status_color() {
 }
 
 _SPS_status() {
-    if [ "$(cat "$_sps_tmp/cmd_status")" -eq 0 ]; then
+    if [ "$(cat "$_SPS_TMP/cmd_status")" -eq 0 ]; then
         printf 'v'
     else
         printf 'x'
@@ -272,8 +276,8 @@ _SPS_status() {
 _SPS_in_git_tree() {
     ! command -v git >/dev/null && return 1
 
-    if [ -f "$_sps_tmp/in_git_tree" ]; then
-        return "$(cat "$_sps_tmp/in_git_tree")"
+    if [ -f "$_SPS_TMP/in_git_tree" ]; then
+        return "$(cat "$_SPS_TMP/in_git_tree")"
     fi
 
     local OLDPWD=$PWD
@@ -291,12 +295,12 @@ _SPS_in_git_tree() {
     cd "$OLDPWD"
 
     if [ -n "$matched" ]; then
-        echo 0 > "$_sps_tmp/in_git_tree"
+        echo 0 > "$_SPS_TMP/in_git_tree"
 
         return 0
     fi
 
-    echo 1 > "$_sps_tmp/in_git_tree"
+    echo 1 > "$_SPS_TMP/in_git_tree"
 
     return 1
 }
@@ -317,10 +321,10 @@ _SPS_git_status_color() {
     fi
 
     if [ -n "$clean" ]; then
-        echo 0 > "$_sps_tmp/git_status"
+        echo 0 > "$_SPS_TMP/git_status"
         printf "\033[0;32m"
     else
-        echo 1 > "$_sps_tmp/git_status"
+        echo 1 > "$_SPS_TMP/git_status"
         printf "\033[0;31m"
     fi
 }
@@ -330,7 +334,7 @@ _SPS_git_status() {
         return
     fi
 
-    if [ "$(cat "$_sps_tmp/git_status")" = 0 ]; then
+    if [ "$(cat "$_SPS_TMP/git_status")" = 0 ]; then
         printf 'v'
     else
         printf '~~~'
@@ -352,7 +356,7 @@ _SPS_git_open_bracket() {
 _SPS_git_close_bracket() {
     _SPS_in_git_tree && printf ']'
 
-    rm "$_sps_tmp/"*git* 2>/dev/null
+    rm "$_SPS_TMP/"*git* 2>/dev/null
 }
 
 _SPS_git_branch() {
