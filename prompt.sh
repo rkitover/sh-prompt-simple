@@ -8,14 +8,11 @@ _SPS_main() {
     _SPS_set_sps_env
     _SPS_set_sps_tmp
 
+    : "${USER:=$(whoami)}"
 
-    : ${USER:=$(whoami)}
+    [ "$(id -u)" = 0 ] && prompt_char='#' || prompt_char='>'
 
-    prompt_char='>'
-
-    [ "$(id -u)" = 0 ] && prompt_char='#'
-
-    _e=$(printf "\033")
+    csi="$(printf "\033")"
 
     if [ -z "$ZSH_VERSION" ]; then
         if [ "$SPS_ESCAPE" = 1 ]; then
@@ -23,35 +20,35 @@ _SPS_main() {
 "'`_SPS_get_status`'"\
 \["'`_SPS_window_title`'"\]\
 \["'`_SPS_status_color`'"\]"'`_SPS_status`'" \
-\[${_e}[0;95m\]${_SPS_ENV} \
-\[${_e}[33m\]"'`_SPS_cwd`'" \
-\[${_e}[0;36m\]"'`_SPS_git_open_bracket`'"\
-\[${_e}[35m\]"'`_SPS_git_branch`'"\
-\[${_e}[0;97m\]"'`_SPS_git_sep`'"\
+\[${csi}[0;95m\]${_SPS_ENV} \
+\[${csi}[33m\]"'`_SPS_cwd`'" \
+\[${csi}[0;36m\]"'`_SPS_git_open_bracket`'"\
+\[${csi}[35m\]"'`_SPS_git_branch`'"\
+\[${csi}[0;97m\]"'`_SPS_git_sep`'"\
 \["'`_SPS_git_status_color`'"\]"'`_SPS_git_status`'"\
-\[${_e}[0;36m\]"'`_SPS_git_close_bracket`'"
-\[${_e}[38;2;140;206;250m\]${USER}\
-\[${_e}[1;97m\]@\
-\[${_e}[0;38;2;140;206;250m\]${hostname} \
-\[${_e}[38;2;220;20;60m\]${prompt_char}\
-\[${_e}[0m\] "
+\[${csi}[0;36m\]"'`_SPS_git_close_bracket`'"
+\[${csi}[38;2;140;206;250m\]${USER}\
+\[${csi}[1;97m\]@\
+\[${csi}[0;38;2;140;206;250m\]${hostname} \
+\[${csi}[38;2;220;20;60m\]${prompt_char}\
+\[${csi}[0m\] "
         else
             PS1="\
 "'`_SPS_get_status`'"\
 "'`_SPS_window_title`'"\
 "'`_SPS_status_color``_SPS_status`'" \
-${_e}[0;95m${_SPS_ENV} \
-${_e}[33m"'`_SPS_cwd`'" \
-${_e}[0;36m"'`_SPS_git_open_bracket`'"\
-${_e}[35m"'`_SPS_git_branch`'"\
-${_e}[0;97m"'`_SPS_git_sep`'"\
+${csi}[0;95m${_SPS_ENV} \
+${csi}[33m"'`_SPS_cwd`'" \
+${csi}[0;36m"'`_SPS_git_open_bracket`'"\
+${csi}[35m"'`_SPS_git_branch`'"\
+${csi}[0;97m"'`_SPS_git_sep`'"\
 "'`_SPS_git_status_color``_SPS_git_status`'"\
-${_e}[0;36m"'`_SPS_git_close_bracket`'"
-${_e}[38;2;140;206;250m${USER}\
-${_e}[1;97m@\
-${_e}[0;38;2;140;206;250m${hostname} \
-${_e}[38;2;220;20;60m${prompt_char}\
-${_e}[0m "
+${csi}[0;36m"'`_SPS_git_close_bracket`'"
+${csi}[38;2;140;206;250m${USER}\
+${csi}[1;97m@\
+${csi}[0;38;2;140;206;250m${hostname} \
+${csi}[38;2;220;20;60m${prompt_char}\
+${csi}[0m "
         fi
 
     else # zsh
@@ -73,7 +70,7 @@ $(_SPS_git_status_color)$(_SPS_git_status)\
     "
         }
 
-        PS1="%{${_e}[38;2;140;206;250m%}${USER}%{${_e}[1;97m%}@%{${_e}[0m${_e}[38;2;140;206;250m%}${hostname} %{${_e}[38;2;220;20;60m%}${prompt_char}%{${_e}[0m%} "
+        PS1="%{${csi}[38;2;140;206;250m%}${USER}%{${csi}[1;97m%}@%{${csi}[0m${csi}[38;2;140;206;250m%}${hostname} %{${csi}[38;2;220;20;60m%}${prompt_char}%{${csi}[0m%} "
     fi
 }
 
