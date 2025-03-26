@@ -260,7 +260,7 @@ $(_SPS_save_last_exit_status)\
 $(_SPS_set_window_title)\
 $(_SPS_last_exit_status_color)$(_SPS_last_exit_status_symbol) \
 \033[0;95m${_SPS_PLATFORM} \
-\033[33m$(_SPS_cwd) \
+\033[33m$(_SPS_pwd) \
 \033[0;36m$(_SPS_git_open_bracket)\
 \033[35m$(_SPS_git_branch)\
 \033[0;97m$(_SPS_git_sep)\
@@ -282,7 +282,7 @@ _SPS_set_ps1_not_zsh_with_escape() {
 \["'`_SPS_set_window_title`'"\]\
 \["'`_SPS_last_exit_status_color`'"\]"'`_SPS_last_exit_status_symbol`'" \
 \[${_SPS_CSI}[0;95m\]${_SPS_PLATFORM} \
-\[${_SPS_CSI}[33m\]"'`_SPS_cwd`'" \
+\[${_SPS_CSI}[33m\]"'`_SPS_pwd`'" \
 \[${_SPS_CSI}[0;36m\]"'`_SPS_git_open_bracket`'"\
 \[${_SPS_CSI}[35m\]"'`_SPS_git_branch`'"\
 \[${_SPS_CSI}[0;97m\]"'`_SPS_git_sep`'"\
@@ -305,7 +305,7 @@ _SPS_set_ps1_not_zsh_without_escape() {
 "'`_SPS_set_window_title`'"\
 "'`_SPS_last_exit_status_color``_SPS_last_exit_status_symbol`'" \
 ${_SPS_CSI}[0;95m${_SPS_PLATFORM} \
-${_SPS_CSI}[33m"'`_SPS_cwd`'" \
+${_SPS_CSI}[33m"'`_SPS_pwd`'" \
 ${_SPS_CSI}[0;36m"'`_SPS_git_open_bracket`'"\
 ${_SPS_CSI}[35m"'`_SPS_git_branch`'"\
 ${_SPS_CSI}[0;97m"'`_SPS_git_sep`'"\
@@ -320,6 +320,7 @@ ${_SPS_CSI}[0m "
 
 # Last Command Exit Status
 
+# Save status to file as run in a subshell, so cannot pass to other functions
 _SPS_save_last_exit_status() {
 	if [ "$?" -eq 0 ]; then
 		touch "$_SPS_TMP/last_exit_status_0"
@@ -369,6 +370,41 @@ _SPS_get_domain_or_localnet_host() {
 		}
 		s/\..*//
 	'
+}
+
+## Current Working Directory
+
+_SPS_pwd() {
+	case "$PWD" in
+		"$HOME")
+			printf '%s' '~'
+			;;
+		"$HOME"/*)
+			local pwd=${PWD#$HOME}
+
+			# TODO: this assumes that there are multiple leading '/',
+			#   otherwise this 'while' block is redundant,
+			#   as the final 'printf' adds back a single '/'.
+			#   and this could be just "printf '~${PWD#$HOME}'".
+			#   However, why would $PWD have multiple '/' after $HOME?
+			# strip leading `/`
+			while :; do
+				case "$pwd" in
+					/*)
+						pwd=${pwd#/}
+						;;
+					*)
+						break
+						;;
+				esac
+			done
+
+			printf '%s' "~/${pwd}"
+			;;
+		*)
+			printf '%s' "${PWD}"
+			;;
+	esac
 }
 
 _SPS_in_git_tree() {
@@ -461,33 +497,6 @@ _SPS_git_branch() {
 	! _SPS_in_git_tree && return
 
 	git rev-parse --abbrev-ref HEAD 2>/dev/null
-}
-
-_SPS_cwd() {
-	case "$PWD" in
-		"$HOME")
-			printf '~'
-			;;
-		"$HOME"/*)
-			local pwd=${PWD#$HOME}
-
-			while :; do
-				case "$pwd" in
-					/*)
-						pwd=${pwd#/}
-						;;
-					*)
-						break
-						;;
-				esac
-			done
-
-			printf "~/${pwd}"
-			;;
-		*)
-			printf "${PWD}"
-			;;
-	esac
 }
 
 # Cleanup on exit
