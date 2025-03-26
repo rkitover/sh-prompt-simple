@@ -237,9 +237,9 @@ _SPS_set_ps1_zsh() {
 
 	precmd() {
 		printf "\
-$(_SPS_get_status)\
+$(_SPS_save_last_exit_status)\
 $(_SPS_window_title)\
-$(_SPS_status_color)$(_SPS_status) \
+$(_SPS_last_exit_status_color)$(_SPS_last_exit_status_symbol) \
 \033[0;95m${_SPS_PLATFORM} \
 \033[33m$(_SPS_cwd) \
 \033[0;36m$(_SPS_git_open_bracket)\
@@ -253,11 +253,13 @@ $(_SPS_git_status_color)$(_SPS_git_status)\
 	PS1="%{${_SPS_CSI}[38;2;140;206;250m%}${USER}%{${_SPS_CSI}[1;97m%}@%{${_SPS_CSI}[0m${_SPS_CSI}[38;2;140;206;250m%}${_SPS_HOSTNAME} %{${_SPS_CSI}[38;2;220;20;60m%}${_SPS_PROMPT_CHAR}%{${_SPS_CSI}[0m%} "
 }
 
+# TODO: Why are these using backticks for command substitution?
+# TODO:  Is it to support old shels that do not support '$(...)'?
 _SPS_set_ps1_not_zsh_with_escape() {
 	PS1="\
-"'`_SPS_get_status`'"\
+"'`_SPS_save_last_exit_status`'"\
 \["'`_SPS_window_title`'"\]\
-\["'`_SPS_status_color`'"\]"'`_SPS_status`'" \
+\["'`_SPS_last_exit_status_color`'"\]"'`_SPS_last_exit_status_symbol`'" \
 \[${_SPS_CSI}[0;95m\]${_SPS_PLATFORM} \
 \[${_SPS_CSI}[33m\]"'`_SPS_cwd`'" \
 \[${_SPS_CSI}[0;36m\]"'`_SPS_git_open_bracket`'"\
@@ -272,11 +274,13 @@ _SPS_set_ps1_not_zsh_with_escape() {
 \[${_SPS_CSI}[0m\] "
 }
 
+# TODO: Why are these using backticks for command substitution?
+# TODO:  Is it to support old shels that do not support '$(...)'?
 _SPS_set_ps1_not_zsh_without_escape() {
 	PS1="\
-"'`_SPS_get_status`'"\
+"'`_SPS_save_last_exit_status`'"\
 "'`_SPS_window_title`'"\
-"'`_SPS_status_color``_SPS_status`'" \
+"'`_SPS_last_exit_status_color``_SPS_last_exit_status_symbol`'" \
 ${_SPS_CSI}[0;95m${_SPS_PLATFORM} \
 ${_SPS_CSI}[33m"'`_SPS_cwd`'" \
 ${_SPS_CSI}[0;36m"'`_SPS_git_open_bracket`'"\
@@ -306,24 +310,26 @@ _SPS_quit() {
 trap "_SPS_quit" EXIT
 
 
-_SPS_get_status() {
+_SPS_save_last_exit_status() {
 	if [ "$?" -eq 0 ]; then
-		printf '%s' 0 > "$_SPS_TMP/cmd_status"
+		touch "$_SPS_TMP/last_exit_status_0"
 	else
-		printf '%s' 1 > "$_SPS_TMP/cmd_status"
+		rm -f "$_SPS_TMP/last_exit_status_0"
 	fi
 }
 
-_SPS_status_color() {
-	if [ "$(cat "$_SPS_TMP/cmd_status")" -eq 0 ]; then
-		printf "\033[0;32m"
+# TODO: why are color and symbol separate functions?
+_SPS_last_exit_status_color() {
+	if [ -e "$_SPS_TMP/last_exit_status_0" ]; then
+		printf "$SGR_FG_GREEN"
 	else
-		printf "\033[0;31m"
+		printf "$SGR_FG_RED"
 	fi
 }
 
-_SPS_status() {
-	if [ "$(cat "$_SPS_TMP/cmd_status")" -eq 0 ]; then
+# TODO: why are color and symbol separate functions?
+_SPS_last_exit_status_symbol() {
+	if [ -e "$_SPS_TMP/last_exit_status_0" ]; then
 		printf 'v'
 	else
 		printf 'x'
