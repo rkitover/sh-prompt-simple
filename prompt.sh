@@ -20,6 +20,7 @@ _SPS_main() {
 	# init script constants
 	_SPS_set_sps_csi
 	_SPS_set_sps_prompt_char
+	_SPS_set_sps_sgr_colors
 
 	# do action
 	_SPS_set_ps1
@@ -191,6 +192,160 @@ _SPS_set_sps_prompt_char() {
 	[ "$(id -u)" = 0 ] && _SPS_PROMPT_CHAR='#' || _SPS_PROMPT_CHAR='>'
 }
 
+## _SPS_SGR_*
+
+# https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
+# http://www.bashguru.com/2010/01/shell-colors-colorizing-shell-scripts.html
+# http://www.pixelbeat.org/docs/terminal_colours/
+
+_SPS_set_sps_sgr_colors() {
+	# background-color
+	_SPS_SGR_BG_BLACK='\033[40m'
+	_SPS_SGR_BG_RED='\033[41m'
+	_SPS_SGR_BG_GREEN='\033[42m'
+	_SPS_SGR_BG_YELLOW='\033[43m'
+	_SPS_SGR_BG_BLUE='\033[44m'
+	_SPS_SGR_BG_MAGENTA='\033[45m'
+	_SPS_SGR_BG_CYAN='\033[46m'
+	_SPS_SGR_BG_WHITE='\033[47m'
+
+	# (foreground) color
+	_SPS_SGR_FG_BLACK='\033[0;30m'
+	_SPS_SGR_FG_RED='\033[0;31m'
+	_SPS_SGR_FG_GREEN='\033[0;32m'
+	_SPS_SGR_FG_YELLOW='\033[0;33m'
+	_SPS_SGR_FG_BLUE='\033[0;34m'
+	_SPS_SGR_FG_MAGENTA='\033[0;35m'
+	_SPS_SGR_FG_CYAN='\033[0;36m'
+	_SPS_SGR_FG_GRAY='\033[0;37m'
+	_SPS_SGR_FG_DARK_GRAY='\033[1;30m'
+	_SPS_SGR_FG_BRIGHT_RED='\033[1;31m'
+	_SPS_SGR_FG_BRIGHT_GREEN='\033[1;32m'
+	_SPS_SGR_FG_BRIGHT_YELLOW='\033[1;33m'
+	_SPS_SGR_FG_BRIGHT_BLUE='\033[1;34m'
+	_SPS_SGR_FG_BRIGHT_MAGENTA='\033[1;35m'
+	_SPS_SGR_FG_BRIGHT_CYAN='\033[1;36m'
+	_SPS_SGR_FG_WHITE='\033[1;37m'
+
+	# text-decoration
+	_SPS_SGR_TD_NORMAL='\033[0m'
+	_SPS_SGR_TD_BOLD='\033[1m'
+	_SPS_SGR_TD_UNDERLINE='\033[4m'
+	_SPS_SGR_TD_BLINK='\033[5m'
+	_SPS_SGR_TD_REVERSE='\033[7m'
+}
+
+# do action
+
+_SPS_set_ps1() {
+	if [ "$ZSH_VERSION" ]; then
+		_SPS_set_ps1_zsh
+	else
+		if [ "$SPS_ESCAPE" = 1 ]; then
+			_SPS_set_ps1_not_zsh_with_escape
+		else
+			_SPS_set_ps1_not_zsh_without_escape
+		fi
+	fi
+}
+
+## ZSH
+
+_SPS_set_ps1_zsh() {
+	setopt PROMPT_SUBST
+
+	precmd() {
+		printf "\
+$(_SPS_save_last_exit_status)\
+$(_SPS_window_title)\
+$(_SPS_last_exit_status_color)$(_SPS_last_exit_status_symbol) \
+\033[0;95m${_SPS_PLATFORM} \
+\033[33m$(_SPS_cwd) \
+\033[0;36m$(_SPS_git_open_bracket)\
+\033[35m$(_SPS_git_branch)\
+\033[0;97m$(_SPS_git_sep)\
+$(_SPS_git_status_color)$(_SPS_git_status)\
+\033[0;36m$(_SPS_git_close_bracket)
+"
+	}
+
+	PS1="%{${_SPS_CSI}[38;2;140;206;250m%}${USER}%{${_SPS_CSI}[1;97m%}@%{${_SPS_CSI}[0m${_SPS_CSI}[38;2;140;206;250m%}${_SPS_HOSTNAME} %{${_SPS_CSI}[38;2;220;20;60m%}${_SPS_PROMPT_CHAR}%{${_SPS_CSI}[0m%} "
+}
+
+## Shells that support esacpe
+
+# TODO: Why are these using backticks '`...`' for command substitution?
+# TODO:  Is it to support old shels that do not support '$(...)'?
+_SPS_set_ps1_not_zsh_with_escape() {
+	PS1="\
+"'`_SPS_save_last_exit_status`'"\
+\["'`_SPS_window_title`'"\]\
+\["'`_SPS_last_exit_status_color`'"\]"'`_SPS_last_exit_status_symbol`'" \
+\[${_SPS_CSI}[0;95m\]${_SPS_PLATFORM} \
+\[${_SPS_CSI}[33m\]"'`_SPS_cwd`'" \
+\[${_SPS_CSI}[0;36m\]"'`_SPS_git_open_bracket`'"\
+\[${_SPS_CSI}[35m\]"'`_SPS_git_branch`'"\
+\[${_SPS_CSI}[0;97m\]"'`_SPS_git_sep`'"\
+\["'`_SPS_git_status_color`'"\]"'`_SPS_git_status`'"\
+\[${_SPS_CSI}[0;36m\]"'`_SPS_git_close_bracket`'"
+\[${_SPS_CSI}[38;2;140;206;250m\]${USER}\
+\[${_SPS_CSI}[1;97m\]@\
+\[${_SPS_CSI}[0;38;2;140;206;250m\]${_SPS_HOSTNAME} \
+\[${_SPS_CSI}[38;2;220;20;60m\]${_SPS_PROMPT_CHAR}\
+\[${_SPS_CSI}[0m\] "
+}
+
+## Shells that do not support esacpe
+
+# TODO: Why are these using backticks '`...`' for command substitution?
+# TODO:  Is it to support old shells that do not support '$(...)'?
+_SPS_set_ps1_not_zsh_without_escape() {
+	PS1="\
+"'`_SPS_save_last_exit_status`'"\
+"'`_SPS_window_title`'"\
+"'`_SPS_last_exit_status_color``_SPS_last_exit_status_symbol`'" \
+${_SPS_CSI}[0;95m${_SPS_PLATFORM} \
+${_SPS_CSI}[33m"'`_SPS_cwd`'" \
+${_SPS_CSI}[0;36m"'`_SPS_git_open_bracket`'"\
+${_SPS_CSI}[35m"'`_SPS_git_branch`'"\
+${_SPS_CSI}[0;97m"'`_SPS_git_sep`'"\
+"'`_SPS_git_status_color``_SPS_git_status`'"\
+${_SPS_CSI}[0;36m"'`_SPS_git_close_bracket`'"
+${_SPS_CSI}[38;2;140;206;250m${USER}\
+${_SPS_CSI}[1;97m@\
+${_SPS_CSI}[0;38;2;140;206;250m${_SPS_HOSTNAME} \
+${_SPS_CSI}[38;2;220;20;60m${_SPS_PROMPT_CHAR}\
+${_SPS_CSI}[0m "
+}
+
+# Last Command Exit Status
+
+_SPS_save_last_exit_status() {
+	if [ "$?" -eq 0 ]; then
+		touch "$_SPS_TMP/last_exit_status_0"
+	else
+		rm -f "$_SPS_TMP/last_exit_status_0"
+	fi
+}
+
+# TODO: why are color and symbol separate functions?
+_SPS_last_exit_status_color() {
+	if [ -e "$_SPS_TMP/last_exit_status_0" ]; then
+		printf "$_SPS_SGR_FG_GREEN"
+	else
+		printf "$_SPS_SGR_FG_RED"
+	fi
+}
+
+# TODO: why are color and symbol separate functions?
+_SPS_last_exit_status_symbol() {
+	if [ -e "$_SPS_TMP/last_exit_status_0" ]; then
+		printf 'v'
+	else
+		printf 'x'
+	fi
+}
+
 ## SPS_WINDOW_TITLE
 
 _SPS_window_title() {
@@ -214,112 +369,6 @@ _SPS_get_domain_or_localnet_host() {
 		}
 		s/\..*//
 	'
-}
-
-# do action
-
-## PS1
-
-_SPS_set_ps1() {
-	if [ "$ZSH_VERSION" ]; then
-		_SPS_set_ps1_zsh
-	else
-		if [ "$SPS_ESCAPE" = 1 ]; then
-			_SPS_set_ps1_not_zsh_with_escape
-		else
-			_SPS_set_ps1_not_zsh_without_escape
-		fi
-	fi
-}
-
-_SPS_set_ps1_zsh() {
-	setopt PROMPT_SUBST
-
-	precmd() {
-		printf "\
-$(_SPS_save_last_exit_status)\
-$(_SPS_window_title)\
-$(_SPS_last_exit_status_color)$(_SPS_last_exit_status_symbol) \
-\033[0;95m${_SPS_PLATFORM} \
-\033[33m$(_SPS_cwd) \
-\033[0;36m$(_SPS_git_open_bracket)\
-\033[35m$(_SPS_git_branch)\
-\033[0;97m$(_SPS_git_sep)\
-$(_SPS_git_status_color)$(_SPS_git_status)\
-\033[0;36m$(_SPS_git_close_bracket)
-"
-	}
-
-	PS1="%{${_SPS_CSI}[38;2;140;206;250m%}${USER}%{${_SPS_CSI}[1;97m%}@%{${_SPS_CSI}[0m${_SPS_CSI}[38;2;140;206;250m%}${_SPS_HOSTNAME} %{${_SPS_CSI}[38;2;220;20;60m%}${_SPS_PROMPT_CHAR}%{${_SPS_CSI}[0m%} "
-}
-
-# TODO: Why are these using backticks for command substitution?
-# TODO:  Is it to support old shels that do not support '$(...)'?
-_SPS_set_ps1_not_zsh_with_escape() {
-	PS1="\
-"'`_SPS_save_last_exit_status`'"\
-\["'`_SPS_window_title`'"\]\
-\["'`_SPS_last_exit_status_color`'"\]"'`_SPS_last_exit_status_symbol`'" \
-\[${_SPS_CSI}[0;95m\]${_SPS_PLATFORM} \
-\[${_SPS_CSI}[33m\]"'`_SPS_cwd`'" \
-\[${_SPS_CSI}[0;36m\]"'`_SPS_git_open_bracket`'"\
-\[${_SPS_CSI}[35m\]"'`_SPS_git_branch`'"\
-\[${_SPS_CSI}[0;97m\]"'`_SPS_git_sep`'"\
-\["'`_SPS_git_status_color`'"\]"'`_SPS_git_status`'"\
-\[${_SPS_CSI}[0;36m\]"'`_SPS_git_close_bracket`'"
-\[${_SPS_CSI}[38;2;140;206;250m\]${USER}\
-\[${_SPS_CSI}[1;97m\]@\
-\[${_SPS_CSI}[0;38;2;140;206;250m\]${_SPS_HOSTNAME} \
-\[${_SPS_CSI}[38;2;220;20;60m\]${_SPS_PROMPT_CHAR}\
-\[${_SPS_CSI}[0m\] "
-}
-
-# TODO: Why are these using backticks for command substitution?
-# TODO:  Is it to support old shels that do not support '$(...)'?
-_SPS_set_ps1_not_zsh_without_escape() {
-	PS1="\
-"'`_SPS_save_last_exit_status`'"\
-"'`_SPS_window_title`'"\
-"'`_SPS_last_exit_status_color``_SPS_last_exit_status_symbol`'" \
-${_SPS_CSI}[0;95m${_SPS_PLATFORM} \
-${_SPS_CSI}[33m"'`_SPS_cwd`'" \
-${_SPS_CSI}[0;36m"'`_SPS_git_open_bracket`'"\
-${_SPS_CSI}[35m"'`_SPS_git_branch`'"\
-${_SPS_CSI}[0;97m"'`_SPS_git_sep`'"\
-"'`_SPS_git_status_color``_SPS_git_status`'"\
-${_SPS_CSI}[0;36m"'`_SPS_git_close_bracket`'"
-${_SPS_CSI}[38;2;140;206;250m${USER}\
-${_SPS_CSI}[1;97m@\
-${_SPS_CSI}[0;38;2;140;206;250m${_SPS_HOSTNAME} \
-${_SPS_CSI}[38;2;220;20;60m${_SPS_PROMPT_CHAR}\
-${_SPS_CSI}[0m "
-}
-
-
-_SPS_save_last_exit_status() {
-	if [ "$?" -eq 0 ]; then
-		touch "$_SPS_TMP/last_exit_status_0"
-	else
-		rm -f "$_SPS_TMP/last_exit_status_0"
-	fi
-}
-
-# TODO: why are color and symbol separate functions?
-_SPS_last_exit_status_color() {
-	if [ -e "$_SPS_TMP/last_exit_status_0" ]; then
-		printf "$SGR_FG_GREEN"
-	else
-		printf "$SGR_FG_RED"
-	fi
-}
-
-# TODO: why are color and symbol separate functions?
-_SPS_last_exit_status_symbol() {
-	if [ -e "$_SPS_TMP/last_exit_status_0" ]; then
-		printf 'v'
-	else
-		printf 'x'
-	fi
 }
 
 _SPS_in_git_tree() {
@@ -441,45 +490,7 @@ _SPS_cwd() {
 	esac
 }
 
-# colors
-# https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
-# http://www.bashguru.com/2010/01/shell-colors-colorizing-shell-scripts.html
-# http://www.pixelbeat.org/docs/terminal_colours/
-
-# background-color
-SGR_BG_BLACK='\033[40m'
-SGR_BG_RED='\033[41m'
-SGR_BG_GREEN='\033[42m'
-SGR_BG_YELLOW='\033[43m'
-SGR_BG_BLUE='\033[44m'
-SGR_BG_MAGENTA='\033[45m'
-SGR_BG_CYAN='\033[46m'
-SGR_BG_WHITE='\033[47m'
-
-# (foreground) color
-SGR_FG_BLACK='\033[0;30m'
-SGR_FG_RED='\033[0;31m'
-SGR_FG_GREEN='\033[0;32m'
-SGR_FG_YELLOW='\033[0;33m'
-SGR_FG_BLUE='\033[0;34m'
-SGR_FG_MAGENTA='\033[0;35m'
-SGR_FG_CYAN='\033[0;36m'
-SGR_FG_GRAY='\033[0;37m'
-SGR_FG_DARK_GRAY='\033[1;30m'
-SGR_FG_BRIGHT_RED='\033[1;31m'
-SGR_FG_BRIGHT_GREEN='\033[1;32m'
-SGR_FG_BRIGHT_YELLOW='\033[1;33m'
-SGR_FG_BRIGHT_BLUE='\033[1;34m'
-SGR_FG_BRIGHT_MAGENTA='\033[1;35m'
-SGR_FG_BRIGHT_CYAN='\033[1;36m'
-SGR_FG_WHITE='\033[1;37m'
-
-# text-decoration
-SGR_TD_NORMAL='\033[0m'
-SGR_TD_BOLD='\033[1m'
-SGR_TD_UNDERLINE='\033[4m'
-SGR_TD_BLINK='\033[5m'
-SGR_TD_REVERSE='\033[7m'
+# Cleanup on exit
 
 # called by `trap` when shell session is exited
 _SPS_cleanup() {
@@ -496,5 +507,7 @@ _SPS_cleanup() {
 
 # trap when shell session is exited
 trap "_SPS_cleanup" EXIT
+
+# Main
 
 _SPS_main
