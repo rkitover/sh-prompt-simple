@@ -257,7 +257,7 @@ _SPS_set_ps1_zsh() {
 	precmd() {
 		printf "\
 $(_SPS_save_last_exit_status)\
-$(_SPS_window_title)\
+$(_SPS_set_window_title)\
 $(_SPS_last_exit_status_color)$(_SPS_last_exit_status_symbol) \
 \033[0;95m${_SPS_PLATFORM} \
 \033[33m$(_SPS_cwd) \
@@ -279,7 +279,7 @@ $(_SPS_git_status_color)$(_SPS_git_status)\
 _SPS_set_ps1_not_zsh_with_escape() {
 	PS1="\
 "'`_SPS_save_last_exit_status`'"\
-\["'`_SPS_window_title`'"\]\
+\["'`_SPS_set_window_title`'"\]\
 \["'`_SPS_last_exit_status_color`'"\]"'`_SPS_last_exit_status_symbol`'" \
 \[${_SPS_CSI}[0;95m\]${_SPS_PLATFORM} \
 \[${_SPS_CSI}[33m\]"'`_SPS_cwd`'" \
@@ -302,7 +302,7 @@ _SPS_set_ps1_not_zsh_with_escape() {
 _SPS_set_ps1_not_zsh_without_escape() {
 	PS1="\
 "'`_SPS_save_last_exit_status`'"\
-"'`_SPS_window_title`'"\
+"'`_SPS_set_window_title`'"\
 "'`_SPS_last_exit_status_color``_SPS_last_exit_status_symbol`'" \
 ${_SPS_CSI}[0;95m${_SPS_PLATFORM} \
 ${_SPS_CSI}[33m"'`_SPS_cwd`'" \
@@ -348,7 +348,7 @@ _SPS_last_exit_status_symbol() {
 
 ## SPS_WINDOW_TITLE
 
-_SPS_window_title() {
+_SPS_set_window_title() {
 	[ "$SPS_WINDOW_TITLE" = 0 ] && return
 
 	printf '\033]0;%s\007' "$(_SPS_domain_or_localnet_host)"
