@@ -295,20 +295,6 @@ ${_SPS_CSI}[38;2;220;20;60m${_SPS_PROMPT_CHAR}\
 ${_SPS_CSI}[0m "
 }
 
-_SPS_quit() {
-	rm -rf "$_SPS_TMP"
-
-	local tmp_root=${_SPS_TMP%/*}
-
-	if [ -z "$(find "$tmp_root" -mindepth 1 -type d)" ]; then
-		rm -rf "$tmp_root"
-	fi
-
-	return 0
-}
-
-trap "_SPS_quit" EXIT
-
 
 _SPS_save_last_exit_status() {
 	if [ "$?" -eq 0 ]; then
@@ -494,5 +480,21 @@ SGR_TD_BOLD='\033[1m'
 SGR_TD_UNDERLINE='\033[4m'
 SGR_TD_BLINK='\033[5m'
 SGR_TD_REVERSE='\033[7m'
+
+# called by `trap` when shell session is exited
+_SPS_cleanup() {
+	rm -rf "$_SPS_TMP"
+
+	local tmp_root=${_SPS_TMP%/*}
+
+	if [ -z "$(find "$tmp_root" -mindepth 1 -type d)" ]; then
+		rm -rf "$tmp_root"
+	fi
+
+	return 0
+}
+
+# trap when shell session is exited
+trap "_SPS_cleanup" EXIT
 
 _SPS_main
