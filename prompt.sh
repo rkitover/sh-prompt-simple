@@ -422,16 +422,19 @@ _SPS_git_open_bracket() {
 #   'touch' and 'test -f' are faster than 'git'
 #   otherwise they can be replaced by the `git rev-parse` call.
 _SPS_save_is_git_repo() {
-	if { command -v 'git' && git rev-parse --is-inside-work-tree; } >/dev/null 2>&1
-	then
-		touch "$_SPS_TMP/is_git_repo"
-	else
-		rm -f "$_SPS_TMP/is_git_repo"
-	fi
+	git rev-parse --abbrev-ref HEAD >"$_SPS_TMP/git_branch" 2>/dev/null && return
+
+	rm -f "$_SPS_TMP/git_branch"
 }
 
 _SPS_is_git_repo() {
-	[ -f "$_SPS_TMP/is_git_repo"  ] && return 0 || return 1
+	[ -f "$_SPS_TMP/git_branch" ] && return 0 || return 1
+}
+
+_SPS_git_branch() {
+	_SPS_is_git_repo || return
+
+	cat "$_SPS_TMP/git_branch"
 }
 
 _SPS_git_status_color() {
@@ -482,12 +485,6 @@ _SPS_git_close_bracket() {
 	_SPS_is_git_repo && printf ']'
 
 	rm "$_SPS_TMP/"*git* 2>/dev/null
-}
-
-_SPS_git_branch() {
-	! _SPS_is_git_repo && return
-
-	git rev-parse --abbrev-ref HEAD 2>/dev/null
 }
 
 # Cleanup on exit
