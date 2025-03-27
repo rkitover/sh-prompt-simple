@@ -172,7 +172,7 @@ _SPS_is_windows() {
 #   to pass messagess between PS1 functions
 #   as these functions are run in different subshells
 _SPS_set_sps_tmp() {
-	_SPS_TMP="${TMP:-${TEMP:-${TMPDIR:-${XDG_RUNTIME_DIR:-/tmp}}}}/sh-prompt-simple/$$"
+	_SPS_TMP="${XDG_RUNTIME_DIR:-${TMP:-${TEMP:-${TMPDIR:-/tmp}}}}/sh-prompt-simple/$$"
 
 	if [ "$_SPS_PLATFORM" = 'windows' ] && [ -z "$_SPS_TMP" ]; then
 		_SPS_TMP="$(printf '%s' "$USERPROFILE/AppData/Local/Temp/sh-prompt-simple/$$" | tr '\\' '/')"
@@ -437,6 +437,12 @@ _SPS_git_branch() {
 	cat "$_SPS_TMP/git_branch"
 }
 
+_SPS_git_sep() {
+	[ -n "$SPS_STATUS" ] || _SPS_is_git_repo || return
+
+	printf '|'
+}
+
 _SPS_git_status_color() {
 	if [ -z "$SPS_STATUS" ] || ! _SPS_is_git_repo; then
 		return
@@ -471,14 +477,6 @@ _SPS_git_status() {
 	else
 		printf '~~~'
 	fi
-}
-
-_SPS_git_sep() {
-	if [ -z "$SPS_STATUS" ] || ! _SPS_is_git_repo; then
-		return
-	fi
-
-	printf '|'
 }
 
 _SPS_git_close_bracket() {
