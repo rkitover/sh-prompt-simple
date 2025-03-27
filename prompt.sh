@@ -168,6 +168,9 @@ _SPS_is_windows() {
 
 ## _SPS_TMP
 
+# create temp folder per shell session ($$)
+#   to pass messagess between PS1 functions
+#   as these functions are run in different subshells
 _SPS_set_sps_tmp() {
 	_SPS_TMP="${TMP:-${TEMP:-${TMPDIR:-${XDG_RUNTIME_DIR:-/tmp}}}}/sh-prompt-simple/$$"
 
@@ -260,7 +263,7 @@ $(_SPS_save_last_exit_status)\
 $(_SPS_set_window_title)\
 $(_SPS_last_exit_status_color)$(_SPS_last_exit_status_symbol) \
 \033[0;95m${_SPS_PLATFORM} \
-\033[33m$(_SPS_pwd) \
+\033[33m$(_SPS_pwd)\
 \033[0;36m$(_SPS_git_open_bracket)\
 \033[35m$(_SPS_git_branch)\
 \033[0;97m$(_SPS_git_sep)\
@@ -282,7 +285,7 @@ _SPS_set_ps1_not_zsh_with_escape() {
 \["'`_SPS_set_window_title`'"\]\
 \["'`_SPS_last_exit_status_color`'"\]"'`_SPS_last_exit_status_symbol`'" \
 \[${_SPS_CSI}[0;95m\]${_SPS_PLATFORM} \
-\[${_SPS_CSI}[33m\]"'`_SPS_pwd`'" \
+\[${_SPS_CSI}[33m\]"'`_SPS_pwd`'"\
 \[${_SPS_CSI}[0;36m\]"'`_SPS_git_open_bracket`'"\
 \[${_SPS_CSI}[35m\]"'`_SPS_git_branch`'"\
 \[${_SPS_CSI}[0;97m\]"'`_SPS_git_sep`'"\
@@ -305,7 +308,7 @@ _SPS_set_ps1_not_zsh_without_escape() {
 "'`_SPS_set_window_title`'"\
 "'`_SPS_last_exit_status_color``_SPS_last_exit_status_symbol`'" \
 ${_SPS_CSI}[0;95m${_SPS_PLATFORM} \
-${_SPS_CSI}[33m"'`_SPS_pwd`'" \
+${_SPS_CSI}[33m"'`_SPS_pwd`'"\
 ${_SPS_CSI}[0;36m"'`_SPS_git_open_bracket`'"\
 ${_SPS_CSI}[35m"'`_SPS_git_branch`'"\
 ${_SPS_CSI}[0;97m"'`_SPS_git_sep`'"\
@@ -407,40 +410,32 @@ _SPS_pwd() {
 	esac
 }
 
-_SPS_in_git_tree() {
-	! command -v git >/dev/null && return 1
+## Git
 
-	if [ -f "$_SPS_TMP/in_git_tree" ]; then
-		return "$(cat "$_SPS_TMP/in_git_tree")"
+# only print if in git repo
+_SPS_git_open_bracket() {
+	_SPS_save_is_git_repo
+	_SPS_is_git_repo && printf ' ['
+}
+
+# This function  and 'is_git_repo' assume that
+#   'touch' and 'test -f' are faster than 'git'
+#   otherwise they can be replaced by the `git rev-parse` call.
+_SPS_save_is_git_repo() {
+	if { command -v 'git' && git rev-parse --is-inside-work-tree; } >/dev/null 2>&1
+	then
+		touch "$_SPS_TMP/is_git_repo"
+	else
+		rm -f "$_SPS_TMP/is_git_repo"
 	fi
+}
 
-	local OLDPWD=$PWD
-
-	local matched=
-
-	while ! (printf "$PWD" | grep -Eqi '^([[:alnum:]]+:)?[\/]$'); do
-		if [ -d .git ]; then
-			matched=1
-			break
-		fi
-		cd ..
-	done
-
-	cd "$OLDPWD"
-
-	if [ -n "$matched" ]; then
-		printf '%s' 0 > "$_SPS_TMP/in_git_tree"
-
-		return 0
-	fi
-
-	printf '%s' 1 > "$_SPS_TMP/in_git_tree"
-
-	return 1
+_SPS_is_git_repo() {
+	[ -f "$_SPS_TMP/is_git_repo"  ] && return 0 || return 1
 }
 
 _SPS_git_status_color() {
-	if [ -z "$SPS_STATUS" ] || ! _SPS_in_git_tree; then
+	if [ -z "$SPS_STATUS" ] || ! _SPS_is_git_repo; then
 		return
 	fi
 
@@ -464,7 +459,7 @@ _SPS_git_status_color() {
 }
 
 _SPS_git_status() {
-	if [ -z "$SPS_STATUS" ] || ! _SPS_in_git_tree; then
+	if [ -z "$SPS_STATUS" ] || ! _SPS_is_git_repo; then
 		return
 	fi
 
@@ -476,25 +471,21 @@ _SPS_git_status() {
 }
 
 _SPS_git_sep() {
-	if [ -z "$SPS_STATUS" ] || ! _SPS_in_git_tree; then
+	if [ -z "$SPS_STATUS" ] || ! _SPS_is_git_repo; then
 		return
 	fi
 
 	printf '|'
 }
 
-_SPS_git_open_bracket() {
-	_SPS_in_git_tree && printf '['
-}
-
 _SPS_git_close_bracket() {
-	_SPS_in_git_tree && printf ']'
+	_SPS_is_git_repo && printf ']'
 
 	rm "$_SPS_TMP/"*git* 2>/dev/null
 }
 
 _SPS_git_branch() {
-	! _SPS_in_git_tree && return
+	! _SPS_is_git_repo && return
 
 	git rev-parse --abbrev-ref HEAD 2>/dev/null
 }
