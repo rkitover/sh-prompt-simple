@@ -267,7 +267,7 @@ $(_SPS_last_exit_status_color)$(_SPS_last_exit_status_symbol) \
 \033[0;36m$(_SPS_git_open_bracket)\
 \033[35m$(_SPS_git_branch)\
 \033[0;97m$(_SPS_git_sep)\
-$(_SPS_git_status_color)$(_SPS_git_status)\
+$(_SPS_git_status_color)$(_SPS_git_status_symbol)\
 \033[0;36m$(_SPS_git_close_bracket)
 "
 	}
@@ -289,7 +289,7 @@ _SPS_set_ps1_not_zsh_with_escape() {
 \[${_SPS_CSI}[0;36m\]"'`_SPS_git_open_bracket`'"\
 \[${_SPS_CSI}[35m\]"'`_SPS_git_branch`'"\
 \[${_SPS_CSI}[0;97m\]"'`_SPS_git_sep`'"\
-\["'`_SPS_git_status_color`'"\]"'`_SPS_git_status`'"\
+\["'`_SPS_git_status_color`'"\]"'`_SPS_git_status_symbol`'"\
 \[${_SPS_CSI}[0;36m\]"'`_SPS_git_close_bracket`'"
 \[${_SPS_CSI}[38;2;140;206;250m\]${USER}\
 \[${_SPS_CSI}[1;97m\]@\
@@ -312,7 +312,7 @@ ${_SPS_CSI}[33m"'`_SPS_pwd`'"\
 ${_SPS_CSI}[0;36m"'`_SPS_git_open_bracket`'"\
 ${_SPS_CSI}[35m"'`_SPS_git_branch`'"\
 ${_SPS_CSI}[0;97m"'`_SPS_git_sep`'"\
-"'`_SPS_git_status_color``_SPS_git_status`'"\
+"'`_SPS_git_status_color``_SPS_git_status_symbol`'"\
 ${_SPS_CSI}[0;36m"'`_SPS_git_close_bracket`'"
 ${_SPS_CSI}[38;2;140;206;250m${USER}\
 ${_SPS_CSI}[1;97m@\
@@ -333,8 +333,9 @@ _SPS_save_last_exit_status() {
 }
 
 # TODO: why are color and symbol separate functions?
+#   is it to support the shells not supporting zero-width escape sequences?
 _SPS_last_exit_status_color() {
-	if [ -e "$_SPS_TMP/last_exit_status_0" ]; then
+	if [ -f "$_SPS_TMP/last_exit_status_0" ]; then
 		printf "$_SPS_SGR_FG_GREEN"
 	else
 		printf "$_SPS_SGR_FG_RED"
@@ -342,8 +343,9 @@ _SPS_last_exit_status_color() {
 }
 
 # TODO: why are color and symbol separate functions?
+#   is it to support the shells not supporting zero-width escape sequences?
 _SPS_last_exit_status_symbol() {
-	if [ -e "$_SPS_TMP/last_exit_status_0" ]; then
+	if [ -f "$_SPS_TMP/last_exit_status_0" ]; then
 		printf 'v'
 	else
 		printf 'x'
@@ -438,41 +440,44 @@ _SPS_git_branch() {
 }
 
 _SPS_git_sep() {
-	[ -n "$SPS_STATUS" ] || _SPS_is_git_repo || return
+	{ [ -n "$SPS_STATUS" ] && _SPS_is_git_repo; } || return
 
 	printf '|'
 }
 
+# TODO: why are color and symbol separate functions?
+#   is it to support the shells not supporting zero-width escape sequences?
 _SPS_git_status_color() {
-	if [ -z "$SPS_STATUS" ] || ! _SPS_is_git_repo; then
-		return
-	fi
+	{ [ -n "$SPS_STATUS" ] && _SPS_is_git_repo; } || return
 
-	status=$(LANG=C LC_ALL=C git status 2>/dev/null)
-	clean=
+	_SPS_save_git_status
 
-	if printf '%s' "$status" | grep -Eq 'working tree clean'; then
-		# For remote tracking branches, check that the branch is up-to-date with the remote branch.
-		if [ "$(printf '%s' "$status" | wc -l)" -le 2 ] || printf '%s' "$status" | grep -Eq '^Your branch is up to date with'; then
-			clean=1
-		fi
-	fi
-
-	if [ -n "$clean" ]; then
-		printf '%s' 0 > "$_SPS_TMP/git_status"
-		printf "\033[0;32m"
+	if [ -f "$_SPS_TMP/git_clean" ]; then
+		printf "$_SPS_SGR_FG_GREEN"
 	else
-		printf '%s' 1 > "$_SPS_TMP/git_status"
-		printf "\033[0;31m"
+		printf "$_SPS_SGR_FG_RED"
 	fi
 }
 
-_SPS_git_status() {
-	if [ -z "$SPS_STATUS" ] || ! _SPS_is_git_repo; then
-		return
+_SPS_save_git_status() {
+	# if in a git work tree
+	if _sps_local="$(LANG=C LC_ALL=C git status --branch --porcelain 2>/dev/null)"; then
+		# first line has branch info. 2nd line onwards have change info
+		if [ "$(printf '%s\n' "$_sps_local" | wc -l)" -gt 1 ]; then
+			rm -f "$_SPS_TMP/git_clean"
+			return
+		fi
 	fi
 
-	if [ "$(cat "$_SPS_TMP/git_status")" = 0 ]; then
+	touch "$_SPS_TMP/git_clean"
+}
+
+# TODO: why are color and symbol separate functions?
+#   is it to support the shells not supporting zero-width escape sequences?
+_SPS_git_status_symbol() {
+	{ [ -n "$SPS_STATUS" ] && _SPS_is_git_repo; } || return
+
+	if [ -f "$_SPS_TMP/git_clean" ]; then
 		printf 'v'
 	else
 		printf '~~~'
