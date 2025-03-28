@@ -493,14 +493,6 @@ _SPS_git_close_bracket() {
 # called by `trap` when shell session is exited
 _SPS_cleanup() {
 	rm -rf "$_SPS_TMP"
-
-	local tmp_root=${_SPS_TMP%/*}
-
-	if [ -z "$(find "$tmp_root" -mindepth 1 -type d)" ]; then
-		rm -rf "$tmp_root"
-	fi
-
-	return 0
 }
 
 # trap when shell session is exited
