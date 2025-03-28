@@ -486,8 +486,6 @@ _SPS_git_status_symbol() {
 
 _SPS_git_close_bracket() {
 	_SPS_is_git_repo && printf ']'
-
-	rm "$_SPS_TMP/"*git* 2>/dev/null
 }
 
 # Cleanup on exit
