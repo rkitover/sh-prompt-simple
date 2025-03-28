@@ -172,7 +172,7 @@ _SPS_is_windows() {
 #   to pass messagess between PS1 functions
 #   as these functions are run in different subshells
 _SPS_set_sps_tmp() {
-	_SPS_TMP="${XDG_RUNTIME_DIR:-${TMP:-${TEMP:-${TMPDIR:-/tmp}}}}/sh-prompt-simple/$$"
+	_SPS_TMP="${XDG_RUNTIME_DIR:-${TMPDIR:-${TEMP:-${TMP:-/tmp}}}}/sh-prompt-simple/$$"
 
 	if [ "$_SPS_PLATFORM" = 'windows' ] && [ -z "$_SPS_TMP" ]; then
 		_SPS_TMP="$(printf '%s' "$USERPROFILE/AppData/Local/Temp/sh-prompt-simple/$$" | tr '\\' '/')"
