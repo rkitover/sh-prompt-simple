@@ -232,21 +232,29 @@ _SPS_set_ps1_zsh() {
 		printf "\
 $(_SPS_save_last_exit_status)\
 $(_SPS_set_window_title)\
-$(_SPS_last_exit_status_color)$(_SPS_last_exit_status_symbol) \
-${_SPS_SGR_FG_BRIGHT_MAGENTA}${_SPS_PLATFORM} \
+$(_SPS_last_exit_status_color)$(_SPS_last_exit_status_symbol)\
+ \
+${_SPS_SGR_FG_BRIGHT_MAGENTA}${_SPS_PLATFORM}\
+ \
 ${_SPS_SGR_FG_YELLOW}$(_SPS_pwd)\
 ${_SPS_SGR_FG_CYAN}$(_SPS_git_open_bracket)\
 ${_SPS_SGR_FG_MAGENTA}$(_SPS_git_branch)\
 ${_SPS_SGR_FG_WHITE}$(_SPS_git_sep)\
 $(_SPS_git_status_color)$(_SPS_git_status_symbol)\
-${_SPS_SGR_FG_CYAN}$(_SPS_git_close_bracket)
+${_SPS_SGR_FG_CYAN}$(_SPS_git_close_bracket)\
 "
 	}
 
-	PS1="%{${_SPS_SGR_FG_8CCEFA}%}${USER}%{${_SPS_SGR_TD_BOLD}${_SPS_SGR_FG_WHITE}%}@%{${_SPS_SGR_TD_NORMAL}${_SPS_SGR_FG_8CCEFA}%}${_SPS_HOSTNAME} %{${_SPS_SGR_FG_C8143C}%}${_SPS_PROMPT_CHAR}%{${_SPS_SGR_TD_NORMAL}%} "
+	PS1="\
+%{${_SPS_SGR_FG_8CCEFA}%}${USER}\
+%{${_SPS_SGR_TD_BOLD}${_SPS_SGR_FG_WHITE}%}@\
+%{${_SPS_SGR_TD_NORMAL}${_SPS_SGR_FG_8CCEFA}%}${_SPS_HOSTNAME}\
+ \
+%{${_SPS_SGR_FG_C8143C}%}${_SPS_PROMPT_CHAR}%{${_SPS_SGR_TD_NORMAL}%}\
+ "
 }
 
-## Shells that support esacpe
+## Shells that support escape
 
 # TODO: Why are these using backticks '`...`' for command substitution?
 # TODO:  Is it to support old shels that do not support '$(...)'?
@@ -254,22 +262,27 @@ _SPS_set_ps1_not_zsh_with_escape() {
 	PS1="\
 "'`_SPS_save_last_exit_status`'"\
 \["'`_SPS_set_window_title`'"\]\
-\["'`_SPS_last_exit_status_color`'"\]"'`_SPS_last_exit_status_symbol`'" \
-\[${_SPS_SGR_FG_BRIGHT_MAGENTA}\]${_SPS_PLATFORM} \
+\["'`_SPS_last_exit_status_color`'"\]"'`_SPS_last_exit_status_symbol`'"\
+ \
+\[${_SPS_SGR_FG_BRIGHT_MAGENTA}\]${_SPS_PLATFORM}\
+ \
 \[${_SPS_SGR_FG_YELLOW}\]"'`_SPS_pwd`'"\
 \[${_SPS_SGR_FG_CYAN}\]"'`_SPS_git_open_bracket`'"\
 \[${_SPS_SGR_FG_MAGENTA}\]"'`_SPS_git_branch`'"\
 \[${_SPS_SGR_FG_WHITE}\]"'`_SPS_git_sep`'"\
 \["'`_SPS_git_status_color`'"\]"'`_SPS_git_status_symbol`'"\
-\[${_SPS_SGR_FG_CYAN}\]"'`_SPS_git_close_bracket`'"
+\[${_SPS_SGR_FG_CYAN}\]"'`_SPS_git_close_bracket`'"\
+\n\
 \[${_SPS_SGR_FG_8CCEFA}\]${USER}\
 \[${_SPS_SGR_TD_BOLD}${_SPS_SGR_FG_WHITE}\]@\
-\[${_SPS_SGR_FG_8CCEFA}\]${_SPS_HOSTNAME} \
+\[${_SPS_SGR_FG_8CCEFA}\]${_SPS_HOSTNAME}\
+ \
 \[${_SPS_SGR_FG_C8143C}\]${_SPS_PROMPT_CHAR}\
-\[${_SPS_SGR_TD_NORMAL}\] "
+\[${_SPS_SGR_TD_NORMAL}\]\
+ "
 }
 
-## Shells that do not support esacpe
+## Shells that do not support escape
 
 # TODO: Why are these using backticks '`...`' for command substitution?
 # TODO:  Is it to support old shells that do not support '$(...)'?
@@ -277,19 +290,24 @@ _SPS_set_ps1_not_zsh_without_escape() {
 	PS1="\
 "'`_SPS_save_last_exit_status`'"\
 "'`_SPS_set_window_title`'"\
-"'`_SPS_last_exit_status_color``_SPS_last_exit_status_symbol`'" \
-${_SPS_SGR_FG_BRIGHT_MAGENTA}${_SPS_PLATFORM} \
+"'`_SPS_last_exit_status_color``_SPS_last_exit_status_symbol`'"\
+ \
+${_SPS_SGR_FG_BRIGHT_MAGENTA}${_SPS_PLATFORM}\
+ \
 ${_SPS_SGR_FG_YELLOW}"'`_SPS_pwd`'"\
 ${_SPS_SGR_FG_CYAN}"'`_SPS_git_open_bracket`'"\
 ${_SPS_SGR_FG_MAGENTA}"'`_SPS_git_branch`'"\
 ${_SPS_SGR_FG_WHITE}"'`_SPS_git_sep`'"\
 "'`_SPS_git_status_color``_SPS_git_status_symbol`'"\
 ${_SPS_SGR_FG_CYAN}"'`_SPS_git_close_bracket`'"
+\n\
 ${_SPS_SGR_FG_8CCEFA}${USER}\
 ${_SPS_SGR_TD_BOLD}${_SPS_SGR_FG_WHITE}@\
-${_SPS_SGR_FG_8CCEFA}${_SPS_HOSTNAME} \
+${_SPS_SGR_FG_8CCEFA}${_SPS_HOSTNAME}\
+ \
 ${_SPS_SGR_FG_C8143C}${_SPS_PROMPT_CHAR}\
-${_SPS_SGR_TD_NORMAL} "
+${_SPS_SGR_TD_NORMAL}\
+ "
 }
 
 # Last Command Exit Status
