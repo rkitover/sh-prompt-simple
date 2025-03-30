@@ -416,17 +416,68 @@ _SPS_pwd() {
 
 # only print if in git repo
 _SPS_git_open_bracket() {
-	_SPS_save_is_git_repo
+	_SPS_save_git_status
 	_SPS_is_git_repo && printf ' ['
 }
 
-# This function  and 'is_git_repo' assume that
-#   'touch' and 'test -f' are faster than 'git'
-#   otherwise they can be replaced by the `git rev-parse` call.
-_SPS_save_is_git_repo() {
-	git rev-parse --abbrev-ref HEAD >"$_SPS_TMP/git_branch" 2>/dev/null && return
+# `git status --branch --porcelain`
+# IF is in work tree
+#   1st line has branch info in format
+#     '## LOCAL_BRANCH
+#     '## LOCAL_BRANCH...REMOTE/REMOTE_BRANCH
+#     '## LOCAL_BRANCH...REMOTE/REMOTE_BRANCH [ahead N, behind Y]
+#   2nd line onwards have change info, one line per file, if any changes.
+# IF is bare repo or in .git directory
+#   fatal: this operation must be run in a work tree
+# IF is not a git repo
+#   fatal: not a git repository (or any of the parent directories): .git
+#
+_SPS_save_git_status() {
+	if _sps_local="$(LANG=C LC_ALL=C git status --branch --porcelain 2>&1)"; then
+		# IF   `git status` does not error out
+		# THEN PWD is in a git work tree
 
-	rm -f "$_SPS_TMP/git_branch"
+		if [ "$(printf '%s\n' "$_sps_local" | wc -l)" -eq 1 ]; then
+			# IF   the output is only 1 line
+			# THEN the work tree is clean
+
+			if [ "${_sps_local#\[*}" != "$_sps_local" ]; then
+				# IF   the output (first line) includes a '['
+				# THEN the local branch is ahead or behind the upstream
+				rm -f "$_SPS_TMP/git_clean"
+			else
+				# ELSE the local branch is either in sync with the upsteam, or has no upstream
+				touch "$_SPS_TMP/git_clean"
+			fi
+		else
+			# ELSE the work tree is dirty
+			# AND the local branch matches the remote branch (if any)
+			rm -f "$_SPS_TMP/git_clean"
+		fi
+
+		# get branch name
+		_sps_local="${_sps_local%%\n*}"  # take only first line
+		_sps_local="${_sps_local#* }"    # strip leading '## '
+		_sps_local="${_sps_local%%...*}" # strip from (first) '...' onwards
+		printf '%s' "$_sps_local" > "$_SPS_TMP/git_branch"
+	else
+		# ELSE PWD is in the .git tree or in a bare repo or not in a git repo
+
+		if [ "${_sps_local%.git}" != "$_sps_local" ]; then
+			# IF   STDERR message ends with '.git'
+			# THEN PWD is not in a git repo
+			rm -f "$_SPS_TMP/git_branch"
+		else
+			# ELSE PWD is in the .git tree or in a bare repo
+			touch "$_SPS_TMP/git_clean"
+
+			# get branch name
+			_sps_local="$(git branch)"
+			_sps_local="${_sps_local#*\* }"
+			_sps_local="${_sps_local%% *}"
+			printf '%s' "$_sps_local" > "$_SPS_TMP/git_branch"
+		fi
+	fi
 }
 
 _SPS_is_git_repo() {
@@ -450,26 +501,11 @@ _SPS_git_sep() {
 _SPS_git_status_color() {
 	{ [ -n "$SPS_STATUS" ] && _SPS_is_git_repo; } || return
 
-	_SPS_save_git_status
-
 	if [ -f "$_SPS_TMP/git_clean" ]; then
 		printf "$_SPS_SGR_FG_GREEN"
 	else
 		printf "$_SPS_SGR_FG_RED"
 	fi
-}
-
-_SPS_save_git_status() {
-	# if in a git work tree
-	if _sps_local="$(LANG=C LC_ALL=C git status --branch --porcelain 2>/dev/null)"; then
-		# first line has branch info. 2nd line onwards have change info
-		if [ "$(printf '%s\n' "$_sps_local" | wc -l)" -gt 1 ]; then
-			rm -f "$_SPS_TMP/git_clean"
-			return
-		fi
-	fi
-
-	touch "$_SPS_TMP/git_clean"
 }
 
 # TODO: why are color and symbol separate functions?
