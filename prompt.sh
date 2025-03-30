@@ -476,7 +476,7 @@ _SPS_is_git_repo() {
 _SPS_git_branch() {
 	_SPS_is_git_repo || return
 
-	cat "$_SPS_TMP/git_branch"
+	head -n 1 "$_SPS_TMP/git_branch"
 }
 
 _SPS_git_sep() {
