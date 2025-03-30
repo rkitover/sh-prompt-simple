@@ -18,9 +18,8 @@ _SPS_main() {
 	_SPS_set_sps_tmp
 
 	# init script constants
-	_SPS_set_sps_csi
+	_SPS_set_sps_colors
 	_SPS_set_sps_prompt_char
-	_SPS_set_sps_sgr_colors
 
 	# do action
 	_SPS_set_ps1
@@ -183,59 +182,31 @@ _SPS_set_sps_tmp() {
 
 # init script constants
 
-## _SPS_CSI
+## ANSI Escape Codes
 
-_SPS_set_sps_csi() {
-	_SPS_CSI="$(printf '\033')"
+_SPS_set_sps_colors() {
+	# background-color
+
+	# (foreground) color
+	_SPS_SGR_FG_RED='\033[31m'
+	_SPS_SGR_FG_GREEN='\033[32m'
+	_SPS_SGR_FG_YELLOW='\033[33m'
+	_SPS_SGR_FG_MAGENTA='\033[35m'
+	_SPS_SGR_FG_CYAN='\033[36m'
+	_SPS_SGR_FG_BRIGHT_MAGENTA='\033[95m'
+	_SPS_SGR_FG_WHITE='\033[97m'
+	_SPS_SGR_FG_8CCEFA='\033[38;2;140;206;250m'
+	_SPS_SGR_FG_C8143C='\033[38;2;220;20;60m'
+
+	# text-decoration
+	_SPS_SGR_TD_NORMAL='\033[0m'
+	_SPS_SGR_TD_BOLD='\033[1m'
 }
 
 ## _SPS_PROMPT_CHAR
 
 _SPS_set_sps_prompt_char() {
 	[ "$(id -u)" = 0 ] && _SPS_PROMPT_CHAR='#' || _SPS_PROMPT_CHAR='>'
-}
-
-## _SPS_SGR_*
-
-# https://en.wikipedia.org/wiki/ANSI_escape_code#Colors
-# http://www.bashguru.com/2010/01/shell-colors-colorizing-shell-scripts.html
-# http://www.pixelbeat.org/docs/terminal_colours/
-
-_SPS_set_sps_sgr_colors() {
-	# background-color
-	_SPS_SGR_BG_BLACK='\033[40m'
-	_SPS_SGR_BG_RED='\033[41m'
-	_SPS_SGR_BG_GREEN='\033[42m'
-	_SPS_SGR_BG_YELLOW='\033[43m'
-	_SPS_SGR_BG_BLUE='\033[44m'
-	_SPS_SGR_BG_MAGENTA='\033[45m'
-	_SPS_SGR_BG_CYAN='\033[46m'
-	_SPS_SGR_BG_WHITE='\033[47m'
-
-	# (foreground) color
-	_SPS_SGR_FG_BLACK='\033[0;30m'
-	_SPS_SGR_FG_RED='\033[0;31m'
-	_SPS_SGR_FG_GREEN='\033[0;32m'
-	_SPS_SGR_FG_YELLOW='\033[0;33m'
-	_SPS_SGR_FG_BLUE='\033[0;34m'
-	_SPS_SGR_FG_MAGENTA='\033[0;35m'
-	_SPS_SGR_FG_CYAN='\033[0;36m'
-	_SPS_SGR_FG_GRAY='\033[0;37m'
-	_SPS_SGR_FG_DARK_GRAY='\033[1;30m'
-	_SPS_SGR_FG_BRIGHT_RED='\033[1;31m'
-	_SPS_SGR_FG_BRIGHT_GREEN='\033[1;32m'
-	_SPS_SGR_FG_BRIGHT_YELLOW='\033[1;33m'
-	_SPS_SGR_FG_BRIGHT_BLUE='\033[1;34m'
-	_SPS_SGR_FG_BRIGHT_MAGENTA='\033[1;35m'
-	_SPS_SGR_FG_BRIGHT_CYAN='\033[1;36m'
-	_SPS_SGR_FG_WHITE='\033[1;37m'
-
-	# text-decoration
-	_SPS_SGR_TD_NORMAL='\033[0m'
-	_SPS_SGR_TD_BOLD='\033[1m'
-	_SPS_SGR_TD_UNDERLINE='\033[4m'
-	_SPS_SGR_TD_BLINK='\033[5m'
-	_SPS_SGR_TD_REVERSE='\033[7m'
 }
 
 # do action
@@ -262,17 +233,17 @@ _SPS_set_ps1_zsh() {
 $(_SPS_save_last_exit_status)\
 $(_SPS_set_window_title)\
 $(_SPS_last_exit_status_color)$(_SPS_last_exit_status_symbol) \
-\033[0;95m${_SPS_PLATFORM} \
-\033[33m$(_SPS_pwd)\
-\033[0;36m$(_SPS_git_open_bracket)\
-\033[35m$(_SPS_git_branch)\
-\033[0;97m$(_SPS_git_sep)\
+${_SPS_SGR_FG_BRIGHT_MAGENTA}${_SPS_PLATFORM} \
+${_SPS_SGR_FG_YELLOW}$(_SPS_pwd)\
+${_SPS_SGR_FG_CYAN}$(_SPS_git_open_bracket)\
+${_SPS_SGR_FG_MAGENTA}$(_SPS_git_branch)\
+${_SPS_SGR_FG_WHITE}$(_SPS_git_sep)\
 $(_SPS_git_status_color)$(_SPS_git_status_symbol)\
-\033[0;36m$(_SPS_git_close_bracket)
+${_SPS_SGR_FG_CYAN}$(_SPS_git_close_bracket)
 "
 	}
 
-	PS1="%{${_SPS_CSI}[38;2;140;206;250m%}${USER}%{${_SPS_CSI}[1;97m%}@%{${_SPS_CSI}[0m${_SPS_CSI}[38;2;140;206;250m%}${_SPS_HOSTNAME} %{${_SPS_CSI}[38;2;220;20;60m%}${_SPS_PROMPT_CHAR}%{${_SPS_CSI}[0m%} "
+	PS1="%{${_SPS_SGR_FG_8CCEFA}%}${USER}%{${_SPS_SGR_TD_BOLD}${_SPS_SGR_FG_WHITE}%}@%{${_SPS_SGR_TD_NORMAL}${_SPS_SGR_FG_8CCEFA}%}${_SPS_HOSTNAME} %{${_SPS_SGR_FG_C8143C}%}${_SPS_PROMPT_CHAR}%{${_SPS_SGR_TD_NORMAL}%} "
 }
 
 ## Shells that support esacpe
@@ -284,18 +255,18 @@ _SPS_set_ps1_not_zsh_with_escape() {
 "'`_SPS_save_last_exit_status`'"\
 \["'`_SPS_set_window_title`'"\]\
 \["'`_SPS_last_exit_status_color`'"\]"'`_SPS_last_exit_status_symbol`'" \
-\[${_SPS_CSI}[0;95m\]${_SPS_PLATFORM} \
-\[${_SPS_CSI}[33m\]"'`_SPS_pwd`'"\
-\[${_SPS_CSI}[0;36m\]"'`_SPS_git_open_bracket`'"\
-\[${_SPS_CSI}[35m\]"'`_SPS_git_branch`'"\
-\[${_SPS_CSI}[0;97m\]"'`_SPS_git_sep`'"\
+\[${_SPS_SGR_FG_BRIGHT_MAGENTA}\]${_SPS_PLATFORM} \
+\[${_SPS_SGR_FG_YELLOW}\]"'`_SPS_pwd`'"\
+\[${_SPS_SGR_FG_CYAN}\]"'`_SPS_git_open_bracket`'"\
+\[${_SPS_SGR_FG_MAGENTA}\]"'`_SPS_git_branch`'"\
+\[${_SPS_SGR_FG_WHITE}\]"'`_SPS_git_sep`'"\
 \["'`_SPS_git_status_color`'"\]"'`_SPS_git_status_symbol`'"\
-\[${_SPS_CSI}[0;36m\]"'`_SPS_git_close_bracket`'"
-\[${_SPS_CSI}[38;2;140;206;250m\]${USER}\
-\[${_SPS_CSI}[1;97m\]@\
-\[${_SPS_CSI}[0;38;2;140;206;250m\]${_SPS_HOSTNAME} \
-\[${_SPS_CSI}[38;2;220;20;60m\]${_SPS_PROMPT_CHAR}\
-\[${_SPS_CSI}[0m\] "
+\[${_SPS_SGR_FG_CYAN}\]"'`_SPS_git_close_bracket`'"
+\[${_SPS_SGR_FG_8CCEFA}\]${USER}\
+\[${_SPS_SGR_TD_BOLD}${_SPS_SGR_FG_WHITE}\]@\
+\[${_SPS_SGR_FG_8CCEFA}\]${_SPS_HOSTNAME} \
+\[${_SPS_SGR_FG_C8143C}\]${_SPS_PROMPT_CHAR}\
+\[${_SPS_SGR_TD_NORMAL}\] "
 }
 
 ## Shells that do not support esacpe
@@ -307,18 +278,18 @@ _SPS_set_ps1_not_zsh_without_escape() {
 "'`_SPS_save_last_exit_status`'"\
 "'`_SPS_set_window_title`'"\
 "'`_SPS_last_exit_status_color``_SPS_last_exit_status_symbol`'" \
-${_SPS_CSI}[0;95m${_SPS_PLATFORM} \
-${_SPS_CSI}[33m"'`_SPS_pwd`'"\
-${_SPS_CSI}[0;36m"'`_SPS_git_open_bracket`'"\
-${_SPS_CSI}[35m"'`_SPS_git_branch`'"\
-${_SPS_CSI}[0;97m"'`_SPS_git_sep`'"\
+${_SPS_SGR_FG_BRIGHT_MAGENTA}${_SPS_PLATFORM} \
+${_SPS_SGR_FG_YELLOW}"'`_SPS_pwd`'"\
+${_SPS_SGR_FG_CYAN}"'`_SPS_git_open_bracket`'"\
+${_SPS_SGR_FG_MAGENTA}"'`_SPS_git_branch`'"\
+${_SPS_SGR_FG_WHITE}"'`_SPS_git_sep`'"\
 "'`_SPS_git_status_color``_SPS_git_status_symbol`'"\
-${_SPS_CSI}[0;36m"'`_SPS_git_close_bracket`'"
-${_SPS_CSI}[38;2;140;206;250m${USER}\
-${_SPS_CSI}[1;97m@\
-${_SPS_CSI}[0;38;2;140;206;250m${_SPS_HOSTNAME} \
-${_SPS_CSI}[38;2;220;20;60m${_SPS_PROMPT_CHAR}\
-${_SPS_CSI}[0m "
+${_SPS_SGR_FG_CYAN}"'`_SPS_git_close_bracket`'"
+${_SPS_SGR_FG_8CCEFA}${USER}\
+${_SPS_SGR_TD_BOLD}${_SPS_SGR_FG_WHITE}@\
+${_SPS_SGR_FG_8CCEFA}${_SPS_HOSTNAME} \
+${_SPS_SGR_FG_C8143C}${_SPS_PROMPT_CHAR}\
+${_SPS_SGR_TD_NORMAL} "
 }
 
 # Last Command Exit Status
@@ -336,9 +307,9 @@ _SPS_save_last_exit_status() {
 #   is it to support the shells not supporting zero-width escape sequences?
 _SPS_last_exit_status_color() {
 	if [ -f "$_SPS_TMP/last_exit_status_0" ]; then
-		printf "$_SPS_SGR_FG_GREEN"
+		printf '%b' "$_SPS_SGR_FG_GREEN"
 	else
-		printf "$_SPS_SGR_FG_RED"
+		printf '%b' "$_SPS_SGR_FG_RED"
 	fi
 }
 
@@ -502,9 +473,9 @@ _SPS_git_status_color() {
 	{ [ -n "$SPS_STATUS" ] && _SPS_is_git_repo; } || return
 
 	if [ -f "$_SPS_TMP/git_clean" ]; then
-		printf "$_SPS_SGR_FG_GREEN"
+		printf '%b' "$_SPS_SGR_FG_GREEN"
 	else
-		printf "$_SPS_SGR_FG_RED"
+		printf '%b' "$_SPS_SGR_FG_RED"
 	fi
 }
 
