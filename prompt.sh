@@ -451,7 +451,6 @@ _SPS_save_git_status() {
 		fi
 
 		# get branch name
-		_sps_local="${_sps_local%%\n*}"  # take only first line
 		_sps_local="${_sps_local#* }"    # strip leading '## '
 		_sps_local="${_sps_local%%...*}" # strip from (first) '...' onwards
 		printf '%s' "$_sps_local" > "$_SPS_TMP/git_branch"
