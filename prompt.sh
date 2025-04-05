@@ -418,9 +418,14 @@ _SPS_git_open_bracket() {
 #     '## LOCAL_BRANCH...REMOTE/REMOTE_BRANCH [ahead N, behind Y]
 #   2nd line onwards have change info, one line per file, if any changes.
 # IF is bare repo or in .git directory
-#   fatal: this operation must be run in a work tree
+#   [git 2.49.0 on MSYS2, git 2.49.0 on Linux]
+#     fatal: this operation must be run in a work tree
 # IF is not a git repo
-#   fatal: not a git repository (or any of the parent directories): .git
+#   [git 2.49.0 on MSYS2]
+#     fatal: not a git repository (or any of the parent directories): .git
+#   [git 2.49.0 on Linux]
+#     fatal: not a git repository (or any parent up to mount point /)
+#     Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set
 #
 _SPS_save_git_status() {
 	if _sps_local="$(LANG=C LC_ALL=C git status --branch --porcelain 2>&1)"; then
@@ -453,12 +458,9 @@ _SPS_save_git_status() {
 	else
 		# ELSE PWD is in the .git tree or in a bare repo or not in a git repo
 
-		if [ "${_sps_local%.git}" != "$_sps_local" ]; then
-			# IF   STDERR message ends with '.git'
-			# THEN PWD is not in a git repo
-			rm -f "$_SPS_TMP/git_branch"
-		else
-			# ELSE PWD is in the .git tree or in a bare repo
+		if [ "${_sps_local%work tree*}" != "$_sps_local" ]; then
+			# IF   STDERR message contains 'work tree'
+			# THEN PWD is in the .git tree or in a bare repo
 			touch "$_SPS_TMP/git_clean"
 
 			# get branch name
@@ -466,6 +468,9 @@ _SPS_save_git_status() {
 			_sps_local="${_sps_local#*\* }"
 			_sps_local="${_sps_local%% *}"
 			printf '%s' "$_sps_local" > "$_SPS_TMP/git_branch"
+		else
+			# ELSE PWD is not in a git repo
+			rm -f "$_SPS_TMP/git_branch"
 		fi
 	fi
 }
