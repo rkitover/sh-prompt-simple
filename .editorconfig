@@ -1,0 +1,36 @@
+# EditorConfig is awesome: https://editorconfig.org
+
+root = true
+# top-most EditorConfig file
+# root: special property that should be specified at the top of the file outside of any sections.
+# Set to "true" to stop .editorconfig files search on current file.
+
+[*]
+# Defaults
+
+indent_style= tab
+# set to "tab" or "space" to use hard tabs or soft tabs respectively.
+
+indent_size = 2
+# a whole number defining the number of columns used for each indentation level and the width of soft tabs (when supported).
+# When set to "tab", the value of tab_width (if specified) will be used.
+
+# tab_width = 2
+# a whole number defining the number of columns used to represent a tab character.
+# This defaults to the value of indent_size and doesn't usually need to be specified.
+
+end_of_line = lf
+# set to "lf", "cr", or "crlf" to control how line breaks are represented.
+
+charset = utf-8
+# set to "latin1", "utf-8", "utf-8-bom", "utf-16be" or "utf-16le" to control the character set.
+
+insert_final_newline = true
+# set to "true" to ensure file ends with a newline when saving and "false" to ensure it doesn't.
+
+trim_trailing_whitespace = true
+# set to "true" to remove any whitespace characters preceding newline characters and "false" to ensure it doesn't.
+
+max_line_length = 80
+# Forces hard line wrapping after the amount of characters specified.
+# "unset" to turn off this feature (use the editor settings).
