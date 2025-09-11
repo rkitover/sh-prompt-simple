@@ -186,22 +186,25 @@ _SPS_set_sps_tmp() {
 ## ANSI Escape Codes
 
 _SPS_set_sps_colors() {
+	# ANSI Control Sequence Introducer
+	_SPS_CSI="$(printf '\033')"
+
 	# background-color
 
 	# (foreground) color
-	_SPS_SGR_FG_RED='\033[31m'
-	_SPS_SGR_FG_GREEN='\033[32m'
-	_SPS_SGR_FG_YELLOW='\033[33m'
-	_SPS_SGR_FG_MAGENTA='\033[35m'
-	_SPS_SGR_FG_CYAN='\033[36m'
-	_SPS_SGR_FG_BRIGHT_MAGENTA='\033[95m'
-	_SPS_SGR_FG_WHITE='\033[97m'
-	_SPS_SGR_FG_8CCEFA='\033[38;2;140;206;250m'
-	_SPS_SGR_FG_C8143C='\033[38;2;220;20;60m'
+	_SPS_SGR_FG_RED="${_SPS_CSI}[31m"
+	_SPS_SGR_FG_GREEN="${_SPS_CSI}[32m"
+	_SPS_SGR_FG_YELLOW="${_SPS_CSI}[33m"
+	_SPS_SGR_FG_MAGENTA="${_SPS_CSI}[35m"
+	_SPS_SGR_FG_CYAN="${_SPS_CSI}[36m"
+	_SPS_SGR_FG_BRIGHT_MAGENTA="${_SPS_CSI}[95m"
+	_SPS_SGR_FG_WHITE="${_SPS_CSI}[97m"
+	_SPS_SGR_FG_8CCEFA="${_SPS_CSI}[38;2;140;206;250m"
+	_SPS_SGR_FG_C8143C="${_SPS_CSI}[38;2;220;20;60m"
 
 	# text-decoration
-	_SPS_SGR_TD_NORMAL='\033[0m'
-	_SPS_SGR_TD_BOLD='\033[1m'
+	_SPS_SGR_TD_NORMAL="${_SPS_CSI}[0m"
+	_SPS_SGR_TD_BOLD="${_SPS_CSI}[1m"
 }
 
 ## _SPS_PROMPT_CHAR
@@ -228,6 +231,7 @@ _SPS_set_ps1() {
 
 _SPS_set_ps1_zsh() {
 	setopt PROMPT_SUBST
+	#setopt promptsubst
 
 	precmd() {
 		printf "\
@@ -246,8 +250,7 @@ ${_SPS_SGR_FG_CYAN}$(_SPS_git_close_bracket)\
 "
 	}
 
-	PS1="\
-%{${_SPS_SGR_FG_8CCEFA}%}${USER}\
+	PS1="%{${_SPS_SGR_FG_8CCEFA}%}${USER}\
 %{${_SPS_SGR_TD_BOLD}${_SPS_SGR_FG_WHITE}%}@\
 %{${_SPS_SGR_TD_NORMAL}${_SPS_SGR_FG_8CCEFA}%}${_SPS_HOSTNAME}\
  \
