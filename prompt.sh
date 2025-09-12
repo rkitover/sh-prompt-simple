@@ -32,13 +32,7 @@ _SPS_main() {
 _SPS_set_sps_escape() {
 	[ -n "$SPS_ESCAPE" ] && return 0
 
-	_SPS_is_bash_or_ash_or_ksh && SPS_ESCAPE=1
-}
-
-_SPS_is_bash_or_ash_or_ksh() {
-	[ "$BASH_VERSION" ] && return 0
-
-	_SPS_is_ash_or_ksh
+	_SPS_is_ash_or_ksh && SPS_ESCAPE=1
 }
 
 _SPS_is_ash_or_ksh() {
