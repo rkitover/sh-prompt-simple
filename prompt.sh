@@ -12,6 +12,7 @@ _SPS_main() {
 	_SPS_set_sps_escape
 
 	# init system constants
+	_SPS_set_newline
 	_SPS_set_user
 	_SPS_set_sps_hostname
 	_SPS_set_sps_platform
@@ -33,6 +34,7 @@ _SPS_set_sps_escape() {
 	[ -n "$SPS_ESCAPE" ] && return 0
 
 	_SPS_is_ash_or_ksh && SPS_ESCAPE=1
+	_SPS_is_windows    && SPS_ESCAPE=1 # Possibly a busybox for Windows build.
 }
 
 _SPS_is_ash_or_ksh() {
@@ -42,9 +44,19 @@ _SPS_is_ash_or_ksh() {
 		| grep -Eq '(^|/)(busybox|bb|ginit|.?ash|ksh.*)$'
 }
 
+_SPS_is_windows() {
+	[ -d '/Windows/System32' ] && return 0
+
+	printf '%s' "$(uname 2>/dev/null)" | grep -qi 'windows'
+}
+
 # init system constants
 
 ## USER
+
+_SPS_set_newline() {
+	_SPS_NEWLINE="$(printf '\n')"
+}
 
 _SPS_set_user() {
 	: "${USER:=$(whoami)}"
@@ -59,13 +71,23 @@ _SPS_set_sps_hostname() {
 ## _SPS_PLATFORM
 
 _SPS_set_sps_platform() {
-	case "$(_SPS_uname_o)" in
+	case "$(uname -o )" in
+		Cygwin) _SPS_PLATFORM='cygwin'  ;;
+		Darwin) _SPS_PLATFORM='macOS'   ;;
+		Msys)
+			if [ -n "$MSYSTEM" ]; then
+				_SPS_PLATFORM="msys:$(printf '%s' "$MSYSTEM" | tr '[:upper:]' '[:lower:]')"
+			else
+				_SPS_PLATFORM='msys'
+			fi
+			;;
 		*Linux)
-			_SPS_PLATFORM=$(_SPS_get_linux_platform)
+			_SPS_PLATFORM="$(_SPS_get_linux_platform)"
 			: "${_SPS_PLATFORM:=linux}"
 			;;
 		*)
-			_SPS_PLATFORM=$(_SPS_get_non_linux_platform)
+			_SPS_PLATFORM="$(_SPS_get_non_linux_platform)"
+			: "${_SPS_PLATFORM:=UNKNOWN}"
 			;;
 	esac
 }
@@ -139,24 +161,11 @@ _SPS_get_linux_platform() {
 _SPS_get_non_linux_platform() {
 	if [ -n "$TERMUX_VERSION" ]; then
 		printf '%s' 'termux'
-	elif [ "$(_SPS_uname_o)" = 'Darwin' ]; then
-		printf '%s' 'macOS'
-	elif [ "$(_SPS_uname_o)" = 'Msys' ] && [ -n "$MSYSTEM" ]; then
-		printf '%s' "$MSYSTEM" | tr '[:upper:]' '[:lower:]'
-	elif [ "$(_SPS_uname_o)" = Cygwin ]; then
-		printf '%s' 'cygwin'
 	elif _SPS_is_windows; then
-		SPS_ESCAPE=1 # Possibly a busybox for Windows build.
 		printf '%s' 'windows'
 	else
 		uname | sed -E 's/[[:space:][:punct:]]+/_/g'
 	fi
-}
-
-_SPS_is_windows() {
-	[ -d '/Windows/System32' ] && return 0
-
-	printf '%s' "$(_SPS_uname_o)$(uname 2>/dev/null)" | grep -qi 'windows'
 }
 
 ## _SPS_TMPDIR
@@ -210,53 +219,20 @@ _SPS_set_sps_prompt_char() {
 # do action
 
 _SPS_set_ps1() {
-	if [ "$ZSH_VERSION" ]; then
-		_SPS_set_ps1_zsh
+	[ -n "$ZSH_VERSION" ] && setopt PROMPT_SUBST
+
+	if [ "$SPS_ESCAPE" = 1 ]; then
+		_SPS_set_ps1_with_escape
 	else
-		if [ "$SPS_ESCAPE" = 1 ]; then
-			_SPS_set_ps1_not_zsh_with_escape
-		else
-			_SPS_set_ps1_not_zsh_without_escape
-		fi
+		_SPS_set_ps1_without_escape
 	fi
-}
-
-## ZSH
-
-_SPS_set_ps1_zsh() {
-	setopt PROMPT_SUBST
-	#setopt promptsubst
-
-	precmd() {
-		printf "\
-$(_SPS_save_last_exit_status)\
-$(_SPS_set_window_title)\
-$(_SPS_last_exit_status_color)$(_SPS_last_exit_status_symbol)\
- \
-${_SPS_SGR_FG_BRIGHT_MAGENTA}${_SPS_PLATFORM}\
- \
-${_SPS_SGR_FG_YELLOW}$(_SPS_pwd)\
-${_SPS_SGR_FG_CYAN}$(_SPS_git_open_bracket)\
-${_SPS_SGR_FG_MAGENTA}$(_SPS_git_branch)\
-${_SPS_SGR_FG_WHITE}$(_SPS_git_sep)\
-$(_SPS_git_status_color)$(_SPS_git_status_symbol)\
-${_SPS_SGR_FG_CYAN}$(_SPS_git_close_bracket)\
-"
-	}
-
-	PS1="%{${_SPS_SGR_FG_8CCEFA}%}${USER}\
-%{${_SPS_SGR_TD_BOLD}${_SPS_SGR_FG_WHITE}%}@\
-%{${_SPS_SGR_TD_NORMAL}${_SPS_SGR_FG_8CCEFA}%}${_SPS_HOSTNAME}\
- \
-%{${_SPS_SGR_FG_C8143C}%}${_SPS_PROMPT_CHAR}%{${_SPS_SGR_TD_NORMAL}%}\
- "
 }
 
 ## Shells that support escape
 
 # TODO: Why are these using backticks '`...`' for command substitution?
 # TODO:  Is it to support old shels that do not support '$(...)'?
-_SPS_set_ps1_not_zsh_with_escape() {
+_SPS_set_ps1_with_escape() {
 	PS1="\
 "'`_SPS_save_last_exit_status`'"\
 \["'`_SPS_set_window_title`'"\]\
@@ -270,7 +246,7 @@ _SPS_set_ps1_not_zsh_with_escape() {
 \[${_SPS_SGR_FG_WHITE}\]"'`_SPS_git_sep`'"\
 \["'`_SPS_git_status_color`'"\]"'`_SPS_git_status_symbol`'"\
 \[${_SPS_SGR_FG_CYAN}\]"'`_SPS_git_close_bracket`'"\
-\n\
+${_SPS_NEWLINE}\
 \[${_SPS_SGR_FG_8CCEFA}\]${USER}\
 \[${_SPS_SGR_TD_BOLD}${_SPS_SGR_FG_WHITE}\]@\
 \[${_SPS_SGR_FG_8CCEFA}\]${_SPS_HOSTNAME}\
@@ -284,7 +260,7 @@ _SPS_set_ps1_not_zsh_with_escape() {
 
 # TODO: Why are these using backticks '`...`' for command substitution?
 # TODO:  Is it to support old shells that do not support '$(...)'?
-_SPS_set_ps1_not_zsh_without_escape() {
+_SPS_set_ps1_without_escape() {
 	PS1="\
 "'`_SPS_save_last_exit_status`'"\
 "'`_SPS_set_window_title`'"\
@@ -298,7 +274,7 @@ ${_SPS_SGR_FG_MAGENTA}"'`_SPS_git_branch`'"\
 ${_SPS_SGR_FG_WHITE}"'`_SPS_git_sep`'"\
 "'`_SPS_git_status_color``_SPS_git_status_symbol`'"\
 ${_SPS_SGR_FG_CYAN}"'`_SPS_git_close_bracket`'"
-\n\
+${_SPS_NEWLINE}\
 ${_SPS_SGR_FG_8CCEFA}${USER}\
 ${_SPS_SGR_TD_BOLD}${_SPS_SGR_FG_WHITE}@\
 ${_SPS_SGR_FG_8CCEFA}${_SPS_HOSTNAME}\
