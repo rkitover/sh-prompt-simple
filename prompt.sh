@@ -2,10 +2,10 @@
 # shellcheck shell=sh
 
 # STYLE GUIDE
-# SPS_SCREAMING_SNAKE_CASE  - user config environment variables (constants)
-# _SPS_SCREAMING_SNAKE_CASE - (global) constants - does not change in a session
-# _sps_snake_case           - (global) variables - may change with each prompt
-# _SPS_snake_case           - functions
+#    SPS_SCREAMING_SNAKE_CASE - user config environment variables (constants)
+#   _SPS_SCREAMING_SNAKE_CASE - (global) constants - do not change in a session
+#   _sps_snake_case           - (global) variables - may change with each prompt
+#   _SPS_snake_case           - functions
 
 _SPS_main() {
 	# init user config constants
@@ -165,20 +165,20 @@ _SPS_is_windows() {
 	printf '%s' "$(_SPS_uname_o)$(uname 2>/dev/null)" | grep -qi 'windows'
 }
 
-## _SPS_TMP
+## _SPS_TMPDIR
 
 # create temp folder per shell session ($$)
 #   to pass messagess between PS1 functions
 #   as these functions are run in different subshells
 _SPS_set_sps_tmp() {
-	_SPS_TMP="${XDG_RUNTIME_DIR:-${TMPDIR:-${TEMP:-${TMP:-/tmp}}}}/sh-prompt-simple/$$"
+	_SPS_TMPDIR="${XDG_RUNTIME_DIR:-${TMPDIR:-${TEMP:-${TMP:-/tmp}}}}/sh-prompt-simple/$$"
 
-	if [ "$_SPS_PLATFORM" = 'windows' ] && [ -z "$_SPS_TMP" ]; then
+	if [ "$_SPS_PLATFORM" = 'windows' ] && [ -z "$_SPS_TMPDIR" ]; then
 		# shellcheck disable=1003
-		_SPS_TMP="$(printf '%s' "$USERPROFILE/AppData/Local/Temp/sh-prompt-simple/$$" | tr '\\' '/')"
+		_SPS_TMPDIR="$(printf '%s' "$USERPROFILE/AppData/Local/Temp/sh-prompt-simple/$$" | tr '\\' '/')"
 	fi
 
-	mkdir -p "$_SPS_TMP"
+	mkdir -p "$_SPS_TMPDIR"
 }
 
 # init script constants
@@ -319,16 +319,16 @@ ${_SPS_SGR_TD_NORMAL}\
 # Save status to file as run in a subshell, so cannot pass to other functions
 _SPS_save_last_exit_status() {
 	if [ "$?" -eq 0 ]; then
-		touch "$_SPS_TMP/last_exit_status_0"
+		touch "$_SPS_TMPDIR/last_exit_status_0"
 	else
-		rm -f "$_SPS_TMP/last_exit_status_0"
+		rm -f "$_SPS_TMPDIR/last_exit_status_0"
 	fi
 }
 
 # TODO: why are color and symbol separate functions?
 #   is it to support the shells not supporting zero-width escape sequences?
 _SPS_last_exit_status_color() {
-	if [ -f "$_SPS_TMP/last_exit_status_0" ]; then
+	if [ -f "$_SPS_TMPDIR/last_exit_status_0" ]; then
 		printf '%b' "$_SPS_SGR_FG_GREEN"
 	else
 		printf '%b' "$_SPS_SGR_FG_RED"
@@ -338,7 +338,7 @@ _SPS_last_exit_status_color() {
 # TODO: why are color and symbol separate functions?
 #   is it to support the shells not supporting zero-width escape sequences?
 _SPS_last_exit_status_symbol() {
-	if [ -f "$_SPS_TMP/last_exit_status_0" ]; then
+	if [ -f "$_SPS_TMPDIR/last_exit_status_0" ]; then
 		printf 'v'
 	else
 		printf 'x'
@@ -442,49 +442,49 @@ _SPS_save_git_status() {
 			if [ "${_sps_local#\[*}" != "$_sps_local" ]; then
 				# IF   the output (first line) includes a '['
 				# THEN the local branch is ahead or behind the upstream
-				rm -f "$_SPS_TMP/git_clean"
+				rm -f "$_SPS_TMPDIR/git_clean"
 			else
 				# ELSE the local branch is either in sync with the upsteam, or has no upstream
-				touch "$_SPS_TMP/git_clean"
+				touch "$_SPS_TMPDIR/git_clean"
 			fi
 		else
 			# ELSE the work tree is dirty
 			# AND the local branch matches the remote branch (if any)
-			rm -f "$_SPS_TMP/git_clean"
+			rm -f "$_SPS_TMPDIR/git_clean"
 		fi
 
 		# get branch name
 		_sps_local="${_sps_local#* }"    # strip leading '## '
 		_sps_local="${_sps_local%%...*}" # strip from (first) '...' onwards
-		printf '%s' "$_sps_local" > "$_SPS_TMP/git_branch"
+		printf '%s' "$_sps_local" > "$_SPS_TMPDIR/git_branch"
 	else
 		# ELSE PWD is in the .git tree or in a bare repo or not in a git repo
 
 		if [ "${_sps_local%work tree*}" != "$_sps_local" ]; then
 			# IF   STDERR message contains 'work tree'
 			# THEN PWD is in the .git tree or in a bare repo
-			touch "$_SPS_TMP/git_clean"
+			touch "$_SPS_TMPDIR/git_clean"
 
 			# get branch name
 			_sps_local="$(git branch)"
 			_sps_local="${_sps_local#*\* }"
 			_sps_local="${_sps_local%% *}"
-			printf '%s' "$_sps_local" > "$_SPS_TMP/git_branch"
+			printf '%s' "$_sps_local" > "$_SPS_TMPDIR/git_branch"
 		else
 			# ELSE PWD is not in a git repo
-			rm -f "$_SPS_TMP/git_branch"
+			rm -f "$_SPS_TMPDIR/git_branch"
 		fi
 	fi
 }
 
 _SPS_is_git_repo() {
-	[ -f "$_SPS_TMP/git_branch" ] && return 0 || return 1
+	[ -f "$_SPS_TMPDIR/git_branch" ] && return 0 || return 1
 }
 
 _SPS_git_branch() {
 	_SPS_is_git_repo || return
 
-	head -n 1 "$_SPS_TMP/git_branch"
+	head -n 1 "$_SPS_TMPDIR/git_branch"
 }
 
 _SPS_git_sep() {
@@ -498,7 +498,7 @@ _SPS_git_sep() {
 _SPS_git_status_color() {
 	{ [ -n "$SPS_STATUS" ] && _SPS_is_git_repo; } || return
 
-	if [ -f "$_SPS_TMP/git_clean" ]; then
+	if [ -f "$_SPS_TMPDIR/git_clean" ]; then
 		printf '%b' "$_SPS_SGR_FG_GREEN"
 	else
 		printf '%b' "$_SPS_SGR_FG_RED"
@@ -510,7 +510,7 @@ _SPS_git_status_color() {
 _SPS_git_status_symbol() {
 	{ [ -n "$SPS_STATUS" ] && _SPS_is_git_repo; } || return
 
-	if [ -f "$_SPS_TMP/git_clean" ]; then
+	if [ -f "$_SPS_TMPDIR/git_clean" ]; then
 		printf 'v'
 	else
 		printf '~~~'
