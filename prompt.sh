@@ -12,7 +12,6 @@ _SPS_main() {
 	_SPS_set_sps_escape
 
 	# init system constants
-	_SPS_set_newline
 	_SPS_set_user
 	_SPS_set_sps_hostname
 	_SPS_set_sps_platform
@@ -53,10 +52,6 @@ _SPS_is_windows() {
 # init system constants
 
 ## USER
-
-_SPS_set_newline() {
-	_SPS_NEWLINE="$(printf '\n')"
-}
 
 _SPS_set_user() {
 	: "${USER:=$(whoami)}"
@@ -246,7 +241,7 @@ _SPS_set_ps1_with_escape() {
 \[${_SPS_SGR_FG_WHITE}\]"'`_SPS_git_sep`'"\
 \["'`_SPS_git_status_color`'"\]"'`_SPS_git_status_symbol`'"\
 \[${_SPS_SGR_FG_CYAN}\]"'`_SPS_git_close_bracket`'"\
-${_SPS_NEWLINE}\
+
 \[${_SPS_SGR_FG_8CCEFA}\]${USER}\
 \[${_SPS_SGR_TD_BOLD}${_SPS_SGR_FG_WHITE}\]@\
 \[${_SPS_SGR_FG_8CCEFA}\]${_SPS_HOSTNAME}\
@@ -273,8 +268,8 @@ ${_SPS_SGR_FG_CYAN}"'`_SPS_git_open_bracket`'"\
 ${_SPS_SGR_FG_MAGENTA}"'`_SPS_git_branch`'"\
 ${_SPS_SGR_FG_WHITE}"'`_SPS_git_sep`'"\
 "'`_SPS_git_status_color``_SPS_git_status_symbol`'"\
-${_SPS_SGR_FG_CYAN}"'`_SPS_git_close_bracket`'"
-${_SPS_NEWLINE}\
+${_SPS_SGR_FG_CYAN}"'`_SPS_git_close_bracket`'"\
+
 ${_SPS_SGR_FG_8CCEFA}${USER}\
 ${_SPS_SGR_TD_BOLD}${_SPS_SGR_FG_WHITE}@\
 ${_SPS_SGR_FG_8CCEFA}${_SPS_HOSTNAME}\
