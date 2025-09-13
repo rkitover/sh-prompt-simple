@@ -102,7 +102,7 @@ _SPS_uname_o() {
 }
 
 _SPS_get_linux_platform() {
-	[ -f '/etc/os-release' ] || return
+	[ -f '/etc/os-release' ] || return 0
 
 	_sps_linux_release="$(sed -nE '/^ID="/s/^ID="([^"]+)".*/\1/p; s/^ID=([^[:space:]]+)/\1/p; t match; d; :match; q' '/etc/os-release')"
 
@@ -323,7 +323,7 @@ _SPS_last_exit_status_symbol() {
 ## SPS_WINDOW_TITLE
 
 _SPS_set_window_title() {
-	[ "$SPS_WINDOW_TITLE" = 0 ] && return
+	[ "$SPS_WINDOW_TITLE" = 0 ] && return 0
 
 	printf '\033]0;%s\007' "$(_SPS_domain_or_localnet_host)"
 }
@@ -457,13 +457,14 @@ _SPS_is_git_repo() {
 }
 
 _SPS_git_branch() {
-	_SPS_is_git_repo || return
+	_SPS_is_git_repo || return 0
 
 	head -n 1 "$_SPS_TMPDIR/git_branch"
 }
 
 _SPS_git_sep() {
-	{ [ -n "$SPS_STATUS" ] && _SPS_is_git_repo; } || return
+	[ "$SPS_STATUS" = '1' ] || return 0
+	_SPS_is_git_repo        || return 0
 
 	printf '|'
 }
@@ -471,7 +472,8 @@ _SPS_git_sep() {
 # TODO: why are color and symbol separate functions?
 #   is it to support the shells not supporting zero-width escape sequences?
 _SPS_git_status_color() {
-	{ [ -n "$SPS_STATUS" ] && _SPS_is_git_repo; } || return
+	[ "$SPS_STATUS" = '1' ] || return 0
+	_SPS_is_git_repo        || return 0
 
 	if [ -f "$_SPS_TMPDIR/git_clean" ]; then
 		printf '%b' "$_SPS_SGR_FG_GREEN"
@@ -483,7 +485,8 @@ _SPS_git_status_color() {
 # TODO: why are color and symbol separate functions?
 #   is it to support the shells not supporting zero-width escape sequences?
 _SPS_git_status_symbol() {
-	{ [ -n "$SPS_STATUS" ] && _SPS_is_git_repo; } || return
+	[ "$SPS_STATUS" = '1' ] || return 0
+	_SPS_is_git_repo        || return 0
 
 	if [ -f "$_SPS_TMPDIR/git_clean" ]; then
 		printf 'v'
