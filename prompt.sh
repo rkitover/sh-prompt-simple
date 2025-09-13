@@ -29,11 +29,20 @@ _SPS_main() {
 
 ## SPS_ESCAPE
 
-_SPS_set_sps_escape() {
-	[ -n "$SPS_ESCAPE" ] && return 0
+# https://tldp.org/HOWTO/Bash-Prompt-HOWTO/nonprintingchars.html
+#		Zero-Width Escape Sequences allows the shell to correctly calculate the
+#		* length of the prompt so that is knows how many characters remain on the
+#			line for command output.
+#		* Otherwise, it counts all the characters in the prompt string, including
+#			the control characters like color codes and dynamic functions.
 
-	_SPS_is_ash_or_ksh && SPS_ESCAPE=1
-	_SPS_is_windows    && SPS_ESCAPE=1 # Possibly a busybox for Windows build.
+_SPS_set_sps_escape() {
+	[ -n "$SPS_ESCAPE"   ] && return 0 # respect user setting
+
+	[ -n "$BASH_VERSION" ] && SPS_ESCAPE=1 && return 0
+	[ -n "$ZSH_VERSION"  ] && SPS_ESCAPE=0 && return 0 # ZSH deos not support Zero-Width Escaping
+	_SPS_is_ash_or_ksh     && SPS_ESCAPE=1 && return 0
+	_SPS_is_windows        && SPS_ESCAPE=1 && return 0 # Possibly a busybox for Windows build.
 }
 
 _SPS_is_ash_or_ksh() {
@@ -214,20 +223,21 @@ _SPS_set_sps_prompt_char() {
 # do action
 
 _SPS_set_ps1() {
-	[ -n "$ZSH_VERSION" ] && setopt PROMPT_SUBST
-
 	if [ "$SPS_ESCAPE" = 1 ]; then
-		_SPS_set_ps1_with_escape
+		_SPS_set_ps1_with_zw_escape
 	else
-		_SPS_set_ps1_without_escape
+		# ZSH does not support Zero-Width Escapes
+		[ -n "$ZSH_VERSION" ] && setopt PROMPT_SUBST
+
+		_SPS_set_ps1_without_zw_escape 
 	fi
 }
 
-## Shells that support escape
+## Shells that DO support the zero-width escape sequence (`\[...\]`)
 
 # TODO: Why are these using backticks '`...`' for command substitution?
 # TODO:  Is it to support old shels that do not support '$(...)'?
-_SPS_set_ps1_with_escape() {
+_SPS_set_ps1_with_zw_escape() {
 	PS1="\
 "'`_SPS_save_last_exit_status`'"\
 \["'`_SPS_set_window_title`'"\]\
@@ -251,11 +261,11 @@ _SPS_set_ps1_with_escape() {
  "
 }
 
-## Shells that do not support escape
+## Shells that DO NOT support the zero-width escape sequence (`\[...\]`)
 
 # TODO: Why are these using backticks '`...`' for command substitution?
 # TODO:  Is it to support old shells that do not support '$(...)'?
-_SPS_set_ps1_without_escape() {
+_SPS_set_ps1_without_zw_escape() {
 	PS1="\
 "'`_SPS_save_last_exit_status`'"\
 "'`_SPS_set_window_title`'"\
